@@ -235,6 +235,10 @@ function ProfileManager({ profil, setProfil }) {
                             <label class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-300 ml-8">Email</label>
                             <input value={profil.email} onInput={e => setProfil({...profil, email: e.target.value})} class="w-full bg-[#f4f1e6]/30 border-2 border-transparent rounded-full py-6 px-10 text-primary font-black outline-none focus:border-primary" />
                         </div>
+                        <div class="space-y-4 md:col-span-2">
+                            <label class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-300 ml-8">Nouveau Mot de passe (laisser vide pour ne pas changer)</label>
+                            <input type="password" value={profil.mot_de_passe || ''} onInput={e => setProfil({...profil, mot_de_passe: e.target.value})} class="w-full bg-[#f4f1e6]/30 border-2 border-transparent rounded-full py-6 px-10 text-primary font-black outline-none focus:border-primary" placeholder="••••••••" />
+                        </div>
                     </div>
                     <button onClick={enregistrer} class="bg-[#231b00] text-[#ffe179] px-16 py-6 rounded-full font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl hover:bg-primary hover:text-[#231b00] transition-all">Sauvegarder</button>
                 </div>
