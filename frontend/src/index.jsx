@@ -1,20 +1,31 @@
 import { LocationProvider, Router, Route, hydrate, prerender as ssr } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
+import { Footer } from './components/Footer.jsx';
 import { Home } from './pages/Home/index.jsx';
+import { AdminDashboard } from './pages/Admin/Dashboard.jsx';
 import { NotFound } from './pages/_404.jsx';
 import './style.css';
 
 export function App() {
 	return (
 		<LocationProvider>
-			<Header />
-			<main>
+			<div class="flex flex-col min-h-screen">
 				<Router>
-					<Route path="/" component={Home} />
+					<Route path="/" component={() => (
+						<>
+							<Header />
+							<main class="flex-grow">
+								<Home />
+							</main>
+							<Footer />
+						</>
+					)} />
+					<Route path="/admin" component={AdminDashboard} />
+					<Route path="/admin/:tab" component={AdminDashboard} />
 					<Route default component={NotFound} />
 				</Router>
-			</main>
+			</div>
 		</LocationProvider>
 	);
 }
