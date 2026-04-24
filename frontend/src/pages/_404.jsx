@@ -1,13 +1,27 @@
+import { Reveal } from '../components/Reveal.jsx';
+
 export function NotFound() {
 	return (
-		<section class="py-xl px-16 max-w-[1440px] mx-auto text-center min-h-[60vh] flex flex-col justify-center items-center">
-			<h1 class="font-display-xl text-display-xl text-primary mb-8">404: Not Found</h1>
-			<p class="font-body-lg text-body-lg text-on-surface-variant mb-12">
-				It seems you've wandered into an uncharted corner of our sanctuary.
-			</p>
-			<a href="/" class="bg-tertiary-fixed text-on-tertiary-fixed px-10 py-5 rounded-full font-label-sm uppercase tracking-widest hover:scale-105 transition-transform duration-500">
-				Return Home
-			</a>
+		<section class="section-shell flex min-h-[70vh] items-center justify-center py-24 text-center">
+			<Reveal class="surface-card-strong max-w-2xl p-10 sm:p-14" delay={120}>
+				<div class="mx-auto inline-flex rounded-full bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+					404
+				</div>
+				<h1 class="mt-6 font-serif text-5xl leading-[0.94] text-on-surface sm:text-6xl lg:text-display-xl">
+					Page introuvable
+				</h1>
+				<p class="mt-6 text-base leading-8 text-on-surface/70 sm:text-lg">
+					La page que vous cherchez a peut-être changé de place. Revenez à l'accueil pour reprendre le fil.
+				</p>
+				<div class="mt-8 flex flex-wrap justify-center gap-4">
+					<a href="/" class="pill-button">
+						Retour à l'accueil
+					</a>
+					<a href="/#contact" class="pill-button-ghost">
+						Nous contacter
+					</a>
+				</div>
+			</Reveal>
 		</section>
 	);
 }

@@ -1,248 +1,416 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { api } from '../../api';
+import { Reveal } from '../../components/Reveal.jsx';
+
+const navItems = [
+	{ tab: 'stats', icon: 'dashboard', label: 'Vue globale' },
+	{ tab: 'news', icon: 'auto_awesome', label: 'Actualités' },
+	{ tab: 'events', icon: 'event', label: 'Événements' },
+	{ tab: 'reviews', icon: 'forum', label: 'Avis clients' },
+	{ tab: 'profile', icon: 'settings', label: 'Mon compte' },
+];
+
+const tabTitles = {
+	stats: 'Tableau de bord',
+	news: 'Actualités',
+	events: 'Événements',
+	reviews: 'Avis clients',
+	profile: 'Paramètres',
+};
 
 export function AdminDashboard() {
-    const { url, route } = useLocation();
-    const currentTab = url.split('/')[2] || 'stats';
-    const [donnees, setDonnees] = useState([]);
-    const [profil, setProfil] = useState(null);
-    const [chargement, setChargement] = useState(true);
+	const { url, route } = useLocation();
+	const currentTab = url.split('/')[2] || 'stats';
+	const [donnees, setDonnees] = useState([]);
+	const [profil, setProfil] = useState(null);
+	const [chargement, setChargement] = useState(true);
 
-    const navigate = (tab) => route(`/admin/${tab}`);
+	const navigate = (tab) => route(`/admin/${tab}`);
 
-    useEffect(() => {
-        setChargement(true);
-        if (currentTab === 'stats') {
-            // On peut agréger des stats ici plus tard
-            setChargement(false);
-        } else if (currentTab === 'news') {
-            api.actualites.lister().then(setDonnees).finally(() => setChargement(false));
-        } else if (currentTab === 'events') {
-            api.evenements.lister().then(setDonnees).finally(() => setChargement(false));
-        } else if (currentTab === 'reviews') {
-            api.avis.lister().then(setDonnees).finally(() => setChargement(false));
-        } else if (currentTab === 'profile') {
-            api.admin.getProfil().then(setProfil).finally(() => setChargement(false));
-        }
-    }, [currentTab]);
+	useEffect(() => {
+		let alive = true;
 
-    const supprimerElement = async (id) => {
-        if (!confirm("Supprimer cet élément ?")) return;
-        try {
-            if (currentTab === 'news') await api.actualites.supprimer(id);
-            setDonnees(donnees.filter(d => d.id !== id));
-        } catch (e) { alert("Erreur suppression"); }
-    };
+		const load = async () => {
+			setChargement(true);
 
-    const modererAvis = async (id, statut) => {
-        try {
-            await api.avis.moderer(id, statut);
-            setDonnees(donnees.map(a => a.id === id ? { ...a, statut } : a));
-        } catch (e) { alert("Erreur modération"); }
-    };
+			try {
+				if (currentTab === 'news') {
+					const items = await api.actualites.lister();
+					if (alive) setDonnees(Array.isArray(items) ? items : []);
+				} else if (currentTab === 'events') {
+					const items = await api.evenements.lister();
+					if (alive) setDonnees(Array.isArray(items) ? items : []);
+				} else if (currentTab === 'reviews') {
+					const items = await api.avis.lister();
+					if (alive) setDonnees(Array.isArray(items) ? items : []);
+				} else if (currentTab === 'profile') {
+					const data = await api.admin.getProfil();
+					if (alive) setProfil(data);
+				} else if (alive) {
+					setDonnees([]);
+				}
+			} catch (error) {
+				console.error('Erreur chargement admin:', error);
+				if (alive) {
+					setDonnees([]);
+				}
+			} finally {
+				if (alive) setChargement(false);
+			}
+		};
 
-    return (
-        <div class="min-h-screen bg-[#FDFBF7] text-slate-900 font-body-md flex flex-col lg:flex-row">
-            {/* Sidebar Or Profond */}
-            <aside class="hidden lg:flex fixed inset-y-6 left-6 w-72 bg-[#d0af2f] rounded-[3rem] shadow-2xl z-40 flex-col border border-white/20">
-                <div class="p-8 flex items-center gap-4">
-                    <div class="w-12 h-12 bg-[#231b00] rounded-2xl flex items-center justify-center shadow-lg cursor-pointer" onClick={() => route('/')}>
-                        <span class="material-symbols-outlined text-[#ffe179] font-bold text-2xl">eco</span>
-                    </div>
-                    <div>
-                        <h1 class="font-serif text-xl font-black text-[#231b00]">Verdant</h1>
-                        <p class="text-[9px] text-[#231b00]/60 uppercase tracking-[0.3em] font-black">Management</p>
-                    </div>
-                </div>
-                <nav class="flex-grow px-4 space-y-2 mt-8">
-                    <SidebarLink active={currentTab === 'stats'} icon="dashboard" label="Vue globale" onClick={() => navigate('stats')} />
-                    <SidebarLink active={currentTab === 'news'} icon="auto_awesome" label="Actualités" onClick={() => navigate('news')} />
-                    <SidebarLink active={currentTab === 'events'} icon="event" label="Événements" onClick={() => navigate('events')} />
-                    <SidebarLink active={currentTab === 'reviews'} icon="forum" label="Avis Clients" onClick={() => navigate('reviews')} />
-                    <SidebarLink active={currentTab === 'profile'} icon="settings" label="Mon Compte" onClick={() => navigate('profile')} />
-                </nav>
-                <div class="p-6">
-                    <button onClick={() => route('/')} class="w-full flex items-center gap-4 px-6 py-5 rounded-[2rem] bg-[#231b00]/10 text-[#231b00] hover:bg-[#231b00] hover:text-white transition-all">
-                        <span class="material-symbols-outlined">logout</span>
-                        <span class="font-black text-[10px] uppercase tracking-widest">Quitter</span>
-                    </button>
-                </div>
-            </aside>
+		load();
 
-            {/* Main Area */}
-            <main class="flex-grow lg:ml-88 p-4 md:p-10 pb-32 lg:pb-10 transition-all duration-500">
-                <header class="flex justify-between items-center mb-12 px-6">
-                    <h2 class="font-serif text-3xl md:text-5xl text-primary capitalize italic">
-                        {currentTab === 'stats' ? 'Tableau de bord' : currentTab === 'profile' ? 'Paramètres' : currentTab}
-                    </h2>
-                    {profil && (
-                        <div class="flex items-center gap-3 bg-white p-2 pr-6 rounded-full border border-[#f4f1e6] shadow-sm">
-                            <img src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00`} class="h-10 w-10 rounded-full" />
-                            <span class="text-xs font-black text-[#231b00] uppercase">{profil.nom}</span>
-                        </div>
-                    )}
-                </header>
+		return () => {
+			alive = false;
+		};
+	}, [currentTab]);
 
-                <div class="animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                    {chargement ? (
-                        <div class="flex justify-center py-20"><span class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></span></div>
-                    ) : (
-                        <>
-                            {currentTab === 'stats' && <StatsOverview />}
-                            {currentTab === 'news' && <NewsManager data={donnees} onSupprimer={supprimerElement} />}
-                            {currentTab === 'events' && <EventsManager data={donnees} />}
-                            {currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
-                            {currentTab === 'profile' && profil && <ProfileManager profil={profil} setProfil={setProfil} />}
-                        </>
-                    )}
-                </div>
-            </main>
+	const supprimerElement = async (id) => {
+		if (!confirm('Supprimer cet élément ?')) return;
 
-            {/* Mobile Nav */}
-            <nav class="lg:hidden fixed bottom-4 inset-x-4 h-20 bg-[#d0af2f] rounded-full shadow-2xl z-50 flex items-center justify-around px-6 border border-white/20">
-                <MobileNavLink active={currentTab === 'stats'} icon="grid_view" onClick={() => navigate('stats')} />
-                <MobileNavLink active={currentTab === 'news'} icon="auto_awesome" onClick={() => navigate('news')} />
-                <div class="w-14 h-14 bg-[#231b00] rounded-full flex items-center justify-center -translate-y-6 shadow-2xl border-4 border-[#FDFBF7]" onClick={() => route('/')}>
-                    <span class="material-symbols-outlined text-[#ffe179] font-bold">home</span>
-                </div>
-                <MobileNavLink active={currentTab === 'events'} icon="event" onClick={() => navigate('events')} />
-                <MobileNavLink active={currentTab === 'profile'} icon="person" onClick={() => navigate('profile')} />
-            </nav>
-        </div>
-    );
+		try {
+			if (currentTab === 'news') {
+				await api.actualites.supprimer(id);
+			}
+			setDonnees(donnees.filter((item) => item.id !== id));
+		} catch (error) {
+			console.error('Erreur suppression:', error);
+			alert('Erreur suppression');
+		}
+	};
+
+	const modererAvis = async (id, statut) => {
+		try {
+			await api.avis.moderer(id, statut);
+			setDonnees(donnees.map((item) => (item.id === id ? { ...item, statut } : item)));
+		} catch (error) {
+			console.error('Erreur modération:', error);
+			alert('Erreur modération');
+		}
+	};
+
+	return (
+		<div class="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(208,175,47,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(0,109,54,0.08),transparent_28%),linear-gradient(180deg,#f8f3e7_0%,#fdfaf1_100%)] text-on-surface">
+			<div class="section-shell-wide flex min-h-screen flex-col gap-6 py-6 lg:flex-row">
+				<aside class="load-rise hidden lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-3rem)] lg:w-80 lg:flex-col lg:justify-between rounded-[2.75rem] border border-white/70 bg-[#17150f] p-6 text-white shadow-lift">
+					<div>
+						<div class="flex items-center gap-4">
+							<button
+								type="button"
+								onClick={() => route('/')}
+								class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-on-primary shadow-soft transition-transform duration-300 hover:-translate-y-0.5"
+							>
+								<span class="material-symbols-outlined text-[22px]">spa</span>
+							</button>
+							<div>
+								<h1 class="font-serif text-2xl text-white">Ny Lapako</h1>
+								<p class="mt-1 text-[9px] font-black uppercase tracking-[0.34em] text-white/40">Management</p>
+							</div>
+						</div>
+
+						<nav class="mt-10 space-y-2">
+							{navItems.map((item) => (
+								<SidebarLink
+									key={item.tab}
+									active={currentTab === item.tab}
+									icon={item.icon}
+									label={item.label}
+									onClick={() => navigate(item.tab)}
+								/>
+							))}
+						</nav>
+					</div>
+
+					<div class="space-y-4">
+						<div class="rounded-[2rem] border border-white/10 bg-white/5 p-4">
+							<p class="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">Raccourci</p>
+							<p class="mt-2 text-sm leading-7 text-white/70">
+								Retour rapide à la page d'accueil ou passage sur la section publique.
+							</p>
+						</div>
+						<button
+							type="button"
+							onClick={() => route('/')}
+							class="flex w-full items-center gap-4 rounded-[1.75rem] bg-white/10 px-5 py-4 text-white transition-colors duration-300 hover:bg-white/15"
+						>
+							<span class="material-symbols-outlined">logout</span>
+							<span class="text-[10px] font-black uppercase tracking-[0.3em]">Quitter</span>
+						</button>
+					</div>
+				</aside>
+
+				<main class="load-rise flex-1 rounded-[2.75rem] border border-white/70 bg-white/72 p-5 shadow-soft backdrop-blur-2xl md:p-8 lg:p-10">
+					<header class="flex flex-col gap-4 border-b border-primary/10 pb-6 md:flex-row md:items-center md:justify-between">
+						<div>
+							<div class="text-[10px] font-black uppercase tracking-[0.34em] text-outline">Espace administrateur</div>
+							<h2 class="mt-3 font-serif text-4xl text-on-surface italic sm:text-5xl">
+								{tabTitles[currentTab] || currentTab}
+							</h2>
+						</div>
+
+						{profil && (
+							<div class="flex items-center gap-3 rounded-full border border-primary/10 bg-white px-3 py-2 shadow-soft">
+								<img
+									src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00`}
+									alt={profil.nom}
+									class="h-11 w-11 rounded-full"
+								/>
+								<div class="pr-2">
+									<div class="text-xs font-black uppercase tracking-[0.28em] text-on-surface">{profil.nom}</div>
+									<div class="text-[10px] uppercase tracking-[0.28em] text-outline">{profil.email}</div>
+								</div>
+							</div>
+						)}
+					</header>
+
+					<div class="pt-8">
+						{chargement ? (
+							<div class="flex justify-center py-24">
+								<span class="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary"></span>
+							</div>
+						) : (
+							<>
+								{currentTab === 'stats' && <StatsOverview />}
+								{currentTab === 'news' && <NewsManager data={donnees} onSupprimer={supprimerElement} />}
+								{currentTab === 'events' && <EventsManager data={donnees} />}
+								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
+								{currentTab === 'profile' && profil && <ProfileManager profil={profil} setProfil={setProfil} />}
+							</>
+						)}
+					</div>
+				</main>
+			</div>
+
+			<nav class="load-rise lg:hidden fixed bottom-4 inset-x-4 z-50 flex h-20 items-center justify-around rounded-full border border-white/70 bg-[#17150f] px-4 shadow-lift backdrop-blur-2xl">
+				{navItems.filter((item) => item.tab !== 'reviews').map((item) => (
+					<MobileNavLink key={item.tab} active={currentTab === item.tab} icon={item.tab === 'stats' ? 'grid_view' : item.icon} onClick={() => navigate(item.tab)} />
+				))}
+				<button
+					type="button"
+					onClick={() => route('/')}
+					class="flex h-14 w-14 -translate-y-6 items-center justify-center rounded-full border-4 border-[#fdfaf1] bg-primary text-on-primary shadow-lift"
+				>
+					<span class="material-symbols-outlined text-[20px]">home</span>
+				</button>
+			</nav>
+		</div>
+	);
 }
 
 function SidebarLink({ icon, label, active, onClick }) {
-    return (
-        <button onClick={onClick} class={`w-full flex items-center gap-5 px-6 py-4 rounded-[1.5rem] transition-all duration-500 ${active ? 'bg-[#231b00] text-[#ffe179]' : 'text-[#231b00]/50 hover:bg-white/10'}`}>
-            <span class="material-symbols-outlined">{icon}</span>
-            <span class="font-black text-[10px] hidden lg:block tracking-[0.2em] uppercase">{label}</span>
-        </button>
-    );
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			class={`flex w-full items-center gap-4 rounded-[1.5rem] px-5 py-4 text-left transition-all duration-300 ${
+				active ? 'bg-primary text-on-primary shadow-soft' : 'text-white/55 hover:bg-white/8 hover:text-white'
+			}`}
+		>
+			<span class="material-symbols-outlined text-[20px]">{icon}</span>
+			<span class="text-[10px] font-black uppercase tracking-[0.28em]">{label}</span>
+		</button>
+	);
 }
 
 function MobileNavLink({ icon, active, onClick }) {
-    return (
-        <button onClick={onClick} class={`p-3 rounded-2xl ${active ? 'text-[#231b00]' : 'text-[#231b00]/30'}`}>
-            <span class="material-symbols-outlined text-2xl font-bold">{icon}</span>
-        </button>
-    );
+	return (
+		<button type="button" onClick={onClick} class={`rounded-2xl p-3 ${active ? 'text-white' : 'text-white/35'}`}>
+			<span class="material-symbols-outlined text-[22px] font-bold">{icon}</span>
+		</button>
+	);
 }
 
 function StatsOverview() {
-    return (
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard label="Occupation" value="89%" icon="bed" />
-            <StatCard label="Avis à modérer" value="5" icon="forum" />
-            <StatCard label="Événements" value="3" icon="event" />
-        </div>
-    );
+	return (
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+			<StatCard label="Occupation" value="89%" icon="bed" hint="Moyenne du mois" delay={80} />
+			<StatCard label="Avis à modérer" value="5" icon="forum" hint="Attente de validation" delay={140} />
+			<StatCard label="Événements" value="3" icon="event" hint="Programmés ce trimestre" delay={200} />
+		</div>
+	);
 }
 
-function StatCard({ label, value, icon }) {
-    return (
-        <div class="bg-white p-8 rounded-[3rem] border border-[#f4f1e6] shadow-sm">
-            <span class="material-symbols-outlined text-primary text-3xl mb-4">{icon}</span>
-            <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">{label}</p>
-            <h4 class="text-4xl font-serif text-primary mt-2">{value}</h4>
-        </div>
-    );
+function StatCard({ label, value, icon, hint, delay = 0 }) {
+	return (
+		<Reveal class="surface-card-strong p-8" delay={delay}>
+			<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+				<span class="material-symbols-outlined text-[24px]">{icon}</span>
+			</div>
+			<p class="mt-6 text-[10px] font-black uppercase tracking-[0.32em] text-outline">{label}</p>
+			<h3 class="mt-3 font-serif text-4xl text-on-surface">{value}</h3>
+			<p class="mt-3 text-sm leading-7 text-on-surface/65">{hint}</p>
+		</Reveal>
+	);
 }
 
 function NewsManager({ data, onSupprimer }) {
-    return (
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {data.map(actu => (
-                <div class="bg-white rounded-[4rem] overflow-hidden border border-[#f4f1e6] group relative">
-                    <img src={actu.image_url || 'https://picsum.photos/seed/1/800/600'} class="h-64 w-full object-cover" />
-                    <div class="p-10">
-                        <h4 class="font-serif text-2xl text-primary italic">{actu.titre}</h4>
-                        <p class="text-slate-400 text-sm mt-4 line-clamp-2">{actu.contenu}</p>
-                        <button onClick={() => onSupprimer(actu.id)} class="mt-6 text-red-500 text-[10px] font-black uppercase tracking-widest hover:underline">Supprimer</button>
-                    </div>
-                </div>
-            ))}
-            <button class="bg-[#231b00] rounded-[4rem] border-2 border-dashed border-primary/20 flex flex-col items-center justify-center p-10 text-primary hover:border-primary transition-all">
-                <span class="material-symbols-outlined text-4xl mb-4">add</span>
-                <span class="font-black text-[10px] uppercase">Nouvelle Actualité</span>
-            </button>
-        </div>
-    );
+	return (
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+			{data.map((actu, index) => (
+				<Reveal key={actu.id} as="article" class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={index * 120}>
+					<img src={actu.image_url || 'https://picsum.photos/seed/1/800/600'} alt={actu.titre} class="h-64 w-full object-cover" loading="lazy" />
+					<div class="p-6">
+						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">{actu.date_publication}</div>
+						<h4 class="mt-4 font-serif text-2xl italic text-on-surface">{actu.titre}</h4>
+						<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70">{actu.contenu}</p>
+						<div class="mt-6 flex items-center justify-between gap-4">
+							<button
+								type="button"
+								onClick={() => onSupprimer(actu.id)}
+								class="text-[10px] font-black uppercase tracking-[0.3em] text-rose-600 transition-colors hover:text-rose-700"
+							>
+								Supprimer
+							</button>
+							<span class="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+								Publier
+							</span>
+						</div>
+					</div>
+				</Reveal>
+			))}
+
+			<Reveal class="surface-card flex min-h-[26rem] flex-col items-center justify-center border-2 border-dashed border-primary/20 bg-white/55 p-8 text-primary transition-colors duration-300 hover:border-primary/50 hover:bg-white/70" delay={data.length * 120}>
+				<span class="material-symbols-outlined text-4xl">add</span>
+				<span class="mt-4 text-[10px] font-black uppercase tracking-[0.32em]">Nouvelle actualité</span>
+			</Reveal>
+		</div>
+	);
 }
 
 function EventsManager({ data }) {
-    return (
-        <div class="space-y-6">
-            {data.map(ev => (
-                <div class="bg-white p-8 rounded-[3rem] border border-[#f4f1e6] flex justify-between items-center">
-                    <div>
-                        <span class="text-primary font-black text-[10px] uppercase tracking-widest">{ev.date_evenement}</span>
-                        <h4 class="font-serif text-2xl text-[#231b00] italic">{ev.titre}</h4>
-                    </div>
-                    <span class="px-4 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest">{ev.statut}</span>
-                </div>
-            ))}
-        </div>
-    );
+	return (
+		<div class="space-y-4">
+			{data.map((event, index) => (
+				<Reveal key={event.id} class="surface-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between" delay={index * 120}>
+					<div>
+						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-primary">{event.date_evenement}</div>
+						<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{event.titre}</h4>
+						<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">{event.description}</p>
+					</div>
+					<div class="rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-tertiary">
+						{event.statut || 'Planifié'}
+					</div>
+				</Reveal>
+			))}
+		</div>
+	);
 }
 
 function ReviewsManager({ data, onModerer }) {
-    return (
-        <div class="bg-white p-12 rounded-[5rem] border border-[#f4f1e6]">
-            <h3 class="font-serif text-4xl text-primary italic mb-12">Livre d'Or</h3>
-            <div class="space-y-12">
-                {data.map(a => (
-                    <div class="flex gap-10 group">
-                        <div class="w-16 h-16 bg-[#f4f1e6] rounded-full flex items-center justify-center font-serif text-primary font-black text-2xl">{a.nom_client[0]}</div>
-                        <div class="flex-grow space-y-4">
-                            <div class="flex items-center gap-6">
-                                <span class="font-black text-[#231b00] text-sm uppercase">{a.nom_client}</span>
-                                <span class={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${a.statut === 'approuve' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{a.statut}</span>
-                            </div>
-                            <p class="text-slate-500 text-lg italic leading-relaxed italic">"{a.commentaire}"</p>
-                            <div class="flex gap-8 pt-4">
-                                {a.statut === 'en_attente' && <button onClick={() => onModerer(a.id, 'approuve')} class="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Approuver</button>}
-                                <button class="text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-red-500">Supprimer</button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+	return (
+		<Reveal class="surface-card-strong p-8" delay={100}>
+			<h3 class="font-serif text-4xl italic text-on-surface">Livre d'or</h3>
+			<div class="mt-10 space-y-8">
+				{data.map((review, index) => (
+					<Reveal key={review.id ?? `${review.nom_client}-${index}`} class="flex gap-5 rounded-[2rem] border border-primary/10 bg-white/80 p-6" delay={index * 110}>
+						<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary font-serif text-xl font-bold">
+							{(review.nom_client || '?')[0].toUpperCase()}
+						</div>
+						<div class="min-w-0 flex-1 space-y-4">
+							<div class="flex flex-wrap items-center gap-3">
+								<span class="font-black uppercase tracking-[0.26em] text-on-surface">{review.nom_client || 'Client anonyme'}</span>
+								<span
+									class={`rounded-full px-3 py-2 text-[9px] font-black uppercase tracking-[0.32em] ${
+										review.statut === 'approuve' || review.statut === 'Approuvé'
+											? 'bg-tertiary/10 text-tertiary'
+											: 'bg-amber-100 text-amber-700'
+									}`}
+								>
+									{review.statut}
+								</span>
+							</div>
+
+							<p class="text-base italic leading-8 text-on-surface/75">"{review.commentaire || 'Sans commentaire'}"</p>
+
+							<div class="flex flex-wrap gap-3 pt-2">
+								{review.statut !== 'approuve' && review.statut !== 'Approuvé' && (
+									<button
+										type="button"
+										onClick={() => onModerer(review.id, 'approuve')}
+										class="text-[10px] font-black uppercase tracking-[0.3em] text-tertiary transition-colors hover:text-tertiary/80"
+									>
+										Approuver
+									</button>
+								)}
+								<button
+									type="button"
+									onClick={() => onModerer(review.id, 'en_attente')}
+									class="text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:text-on-surface"
+								>
+									Mettre en attente
+								</button>
+							</div>
+						</div>
+					</Reveal>
+				))}
+			</div>
+		</Reveal>
+	);
 }
 
 function ProfileManager({ profil, setProfil }) {
-    const enregistrer = async () => {
-        try {
-            await api.admin.updateProfil(profil);
-            alert("Profil sauvegardé !");
-        } catch (e) { alert("Erreur sauvegarde"); }
-    };
+	const enregistrer = async () => {
+		try {
+			await api.admin.updateProfil(profil);
+			alert('Profil sauvegardé !');
+		} catch (error) {
+			console.error('Erreur sauvegarde profil:', error);
+			alert('Erreur sauvegarde');
+		}
+	};
 
-    return (
-        <div class="max-w-5xl bg-white p-12 md:p-20 rounded-[5rem] border border-[#f4f1e6]">
-            <div class="flex flex-col md:flex-row gap-16 items-start">
-                <img src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00&size=300`} class="w-44 h-44 rounded-[3.5rem] shadow-2xl" />
-                <div class="flex-grow w-full space-y-12">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        <div class="space-y-4">
-                            <label class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-300 ml-8">Nom</label>
-                            <input value={profil.nom} onInput={e => setProfil({...profil, nom: e.target.value})} class="w-full bg-[#f4f1e6]/30 border-2 border-transparent rounded-full py-6 px-10 text-primary font-black outline-none focus:border-primary" />
-                        </div>
-                        <div class="space-y-4">
-                            <label class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-300 ml-8">Email</label>
-                            <input value={profil.email} onInput={e => setProfil({...profil, email: e.target.value})} class="w-full bg-[#f4f1e6]/30 border-2 border-transparent rounded-full py-6 px-10 text-primary font-black outline-none focus:border-primary" />
-                        </div>
-                        <div class="space-y-4 md:col-span-2">
-                            <label class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-300 ml-8">Nouveau Mot de passe (laisser vide pour ne pas changer)</label>
-                            <input type="password" value={profil.mot_de_passe || ''} onInput={e => setProfil({...profil, mot_de_passe: e.target.value})} class="w-full bg-[#f4f1e6]/30 border-2 border-transparent rounded-full py-6 px-10 text-primary font-black outline-none focus:border-primary" placeholder="••••••••" />
-                        </div>
-                    </div>
-                    <button onClick={enregistrer} class="bg-[#231b00] text-[#ffe179] px-16 py-6 rounded-full font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl hover:bg-primary hover:text-[#231b00] transition-all">Sauvegarder</button>
-                </div>
-            </div>
-        </div>
-    );
+	return (
+		<Reveal class="surface-card-strong p-8 lg:p-10" delay={100}>
+			<div class="flex flex-col gap-10 lg:flex-row lg:items-start">
+				<img
+					src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00&size=300`}
+					alt={profil.nom}
+					class="h-36 w-36 rounded-[2rem] shadow-lift"
+				/>
+
+				<div class="flex-1 space-y-8">
+					<div class="grid gap-6 md:grid-cols-2">
+						<div class="space-y-3">
+							<label class="field-label">Nom</label>
+							<input
+								value={profil.nom}
+								onInput={(e) => setProfil({ ...profil, nom: e.target.value })}
+								class="field-input"
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Email</label>
+							<input
+								value={profil.email}
+								onInput={(e) => setProfil({ ...profil, email: e.target.value })}
+								class="field-input"
+							/>
+						</div>
+
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">Nouveau mot de passe</label>
+							<input
+								type="password"
+								value={profil.mot_de_passe || ''}
+								onInput={(e) => setProfil({ ...profil, mot_de_passe: e.target.value })}
+								class="field-input"
+								placeholder="••••••••"
+							/>
+						</div>
+					</div>
+
+					<button
+						type="button"
+						onClick={enregistrer}
+						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
+					>
+						Sauvegarder
+					</button>
+				</div>
+			</div>
+		</Reveal>
+	);
 }

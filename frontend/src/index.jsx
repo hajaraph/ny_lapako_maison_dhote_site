@@ -10,7 +10,7 @@ import './style.css';
 export function App() {
 	return (
 		<LocationProvider>
-			<div class="flex flex-col min-h-screen">
+			<div class="flex min-h-screen flex-col bg-background text-on-surface">
 				<Router>
 					<Route path="/" component={() => (
 						<>

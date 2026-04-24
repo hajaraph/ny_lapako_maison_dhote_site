@@ -1,50 +1,130 @@
+import { Reveal } from './Reveal.jsx';
+
 export function Footer() {
+	const highlights = [
+		{ label: 'Suites', value: '6 espaces lumineux' },
+		{ label: 'Jardin', value: '4 hectares apaisés' },
+		{ label: 'Petit-déjeuner', value: 'Local et fait maison' },
+	];
+
+	const contactCards = [
+		{
+			title: 'Adresse',
+			lines: ['Lanirano', 'Fort-Dauphin', 'Madagascar'],
+		},
+		{
+			title: 'Nous contacter',
+			lines: ['Contact : 0340721499', 'WhatsApp : 0340721499'],
+		},
+		{
+			title: 'Horaires',
+			lines: ['Accueil 7j/7', 'Check-in dès 15h'],
+		},
+	];
+
 	return (
-		<footer id="contact" class="bg-[#1c1b12] w-full py-20 px-8 md:px-16 border-t border-primary/20">
-			<div class="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-[1440px] mx-auto">
-				<div class="col-span-1 md:col-span-1">
-					<div class="text-xl font-serif text-primary mb-6 italic font-bold">Ny Lapako</div>
-					<p class="font-serif text-sm text-primary/40 leading-relaxed mb-8">
-						Un sanctuaire de sérénité dédié à l'architecture du silence et au luxe de la lumière dorée.
-					</p>
-					<div class="flex gap-4">
-						<span class="material-symbols-outlined text-primary cursor-pointer hover:text-tertiary transition-colors">camera</span>
-						<span class="material-symbols-outlined text-primary cursor-pointer hover:text-tertiary transition-colors">alternate_email</span>
+		<footer id="contact" class="relative overflow-hidden border-t border-primary/10 bg-[#17150f] text-white">
+			<div class="absolute -top-24 right-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl orb-drift"></div>
+			<div class="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-tertiary/15 blur-3xl orb-drift"></div>
+
+			<div class="section-shell-wide relative py-20 lg:py-24">
+				<Reveal class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]" delay={120}>
+					<div class="surface-card-strong border-white/10 bg-white/5 p-8 text-white lg:p-10">
+						<div class="flex flex-col gap-8">
+							<div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+								<div>
+									<div class="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-white/70">
+										Ny Lapako
+									</div>
+									<h2 class="mt-6 max-w-xl font-serif text-4xl leading-[1] text-white sm:text-5xl">
+										Une adresse pensée comme une respiration.
+									</h2>
+									<p class="mt-5 max-w-2xl text-base leading-8 text-white/72 sm:text-lg">
+										Entre jardin, lumière dorée et hospitalité discrète, Ny Lapako propose une expérience plus calme, plus fluide et plus contemporaine.
+									</p>
+								</div>
+
+								<a href="/#chambres" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-primary transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-on-surface">
+									Voir les suites
+								</a>
+							</div>
+
+							<div class="grid gap-4 sm:grid-cols-3">
+								{highlights.map((item) => (
+									<div key={item.label} class="rounded-[1.5rem] border border-white/10 bg-white/8 px-4 py-4">
+										<div class="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">{item.label}</div>
+										<div class="mt-2 text-sm font-semibold text-white">{item.value}</div>
+									</div>
+								))}
+							</div>
+
+							<div class="flex flex-wrap gap-4 text-white/45">
+								<a href="tel:0340721499" class="inline-flex items-center gap-2 transition-colors hover:text-white">
+									<span class="material-symbols-outlined text-sm">call</span>
+									<span class="text-[10px] font-black uppercase tracking-[0.3em]">Contact</span>
+								</a>
+								<a href="https://wa.me/261340721499" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 transition-colors hover:text-white">
+									<span class="material-symbols-outlined text-sm">chat</span>
+									<span class="text-[10px] font-black uppercase tracking-[0.3em]">WhatsApp</span>
+								</a>
+							</div>
+						</div>
 					</div>
-				</div>
-				<div>
-					<h4 class="font-serif text-sm text-white font-bold mb-6 uppercase tracking-widest text-primary/60">Adresse</h4>
-					<p class="font-serif text-sm text-primary/40 leading-loose">
-						124 Avenue des Pins<br />
-						64200 Biarritz<br />
-						France
-					</p>
-				</div>
-				<div>
-					<h4 class="font-serif text-sm text-white font-bold mb-6 uppercase tracking-widest text-primary/60">Nous contacter</h4>
-					<p class="font-serif text-sm text-primary/40 leading-loose">
-						bonjour@nylapako.fr<br />
-						+33 (0) 5 59 00 00 00
-					</p>
-				</div>
-				<div>
-					<h4 class="font-serif text-sm text-white font-bold mb-6 uppercase tracking-widest text-primary/60">Lettre d'information</h4>
-					<p class="font-serif text-sm text-primary/40 mb-4">Des nouvelles douces pour vies intenses.</p>
-					<div class="flex border-b border-primary/20 py-2">
-						<input class="bg-transparent border-none text-white focus:ring-0 w-full placeholder:text-primary/20 font-serif text-sm" placeholder="Votre email" type="email" />
-						<button class="text-primary material-symbols-outlined hover:text-tertiary">arrow_forward</button>
+
+					<div class="grid gap-6 sm:grid-cols-2">
+						{contactCards.map((card) => (
+							<FooterInfoCard key={card.title} title={card.title} lines={card.lines} />
+						))}
+
+						<div class="surface-card-strong border-white/10 bg-white/5 p-6 sm:col-span-2">
+							<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/45">Lettre d'information</div>
+							<p class="mt-4 max-w-md text-sm leading-7 text-white/72">
+								Des nouvelles douces, des disponibilités et quelques inspirations saisonnières.
+							</p>
+							<form class="mt-6 flex flex-col gap-3 sm:flex-row">
+								<input
+									class="w-full rounded-full border border-white/10 bg-white/8 px-5 py-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
+									placeholder="Votre email"
+									type="email"
+								/>
+								<button
+									type="submit"
+									class="inline-flex items-center justify-center rounded-full bg-white px-5 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
+								>
+									S'inscrire
+								</button>
+							</form>
+						</div>
 					</div>
-				</div>
-			</div>
-			<div class="max-w-[1440px] mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-				<div class="font-serif text-[10px] uppercase tracking-widest text-primary/20">
-					© 2024 Ny Lapako Luxury Guest House.
-				</div>
-				<div class="flex gap-8">
-					<a class="font-serif text-[10px] uppercase tracking-widest text-primary/30 hover:text-primary transition-colors" href="#">Confidentialité</a>
-					<a class="font-serif text-[10px] uppercase tracking-widest text-primary/30 hover:text-primary transition-colors" href="#">Conditions</a>
-				</div>
+				</Reveal>
+
+				<Reveal class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between" delay={220}>
+					<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">
+						© 2026 Ny Lapako Luxury Guest House.
+					</div>
+					<div class="flex flex-wrap gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/35">
+						<a class="transition-colors hover:text-white" href="#">
+							Confidentialité
+						</a>
+						<a class="transition-colors hover:text-white" href="#">
+							Conditions
+						</a>
+					</div>
+				</Reveal>
 			</div>
 		</footer>
+	);
+}
+
+function FooterInfoCard({ title, lines }) {
+	return (
+		<div class="surface-card-strong border-white/10 bg-white/5 p-6 text-white">
+			<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/45">{title}</div>
+			<div class="mt-4 space-y-2 text-sm leading-7 text-white/72">
+				{lines.map((line) => (
+					<div key={line}>{line}</div>
+				))}
+			</div>
+		</div>
 	);
 }
