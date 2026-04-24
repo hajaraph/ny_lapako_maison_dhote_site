@@ -10,11 +10,32 @@ export function Home() {
     const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
     useEffect(() => {
-        api.actualites.lister().then(setActualites).catch(console.error);
-        api.evenements.lister().then(setEvenements).catch(console.error);
-        api.avis.lister().then(data => {
-            setAvis(data.filter(a => a.statut === 'approuve' || a.statut === 'Approuvé'));
-        }).catch(console.error);
+        api.actualites.lister()
+            .then(data => setActualites(Array.isArray(data) ? data : []))
+            .catch(err => {
+                console.error("Erreur actualités:", err);
+                setActualites([]);
+            });
+
+        api.evenements.lister()
+            .then(data => setEvenements(Array.isArray(data) ? data : []))
+            .catch(err => {
+                console.error("Erreur événements:", err);
+                setEvenements([]);
+            });
+
+        api.avis.lister()
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setAvis(data.filter(a => a && (a.statut === 'approuve' || a.statut === 'Approuvé')));
+                } else {
+                    setAvis([]);
+                }
+            })
+            .catch(err => {
+                console.error("Erreur avis:", err);
+                setAvis([]);
+            });
     }, []);
 
     const soumettreAvis = async (e) => {
@@ -34,63 +55,53 @@ export function Home() {
 	return (
 		<div class="home bg-background">
 			{/* 1. HERO SECTION */}
-			<section class="relative h-screen min-h-[800px] flex items-center justify-center overflow-hidden">
+			<section id="esprit" class="scroll-mt-24 relative h-screen min-h-[800px] flex items-center justify-center overflow-hidden">
 				<div class="absolute inset-0 z-0">
 					<img class="w-full h-full object-cover" alt="Patio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWYkFc45A9M8apLV9JE5XM_BLybjOls-oZP9m2tmZso-MJB44IaCIiyqQvkpYb8tIBuEiBSdE7Q6X-VfghxIZgeD0ss8bQ5hydyPDF8vQ3aIP2Zg-Z3eTrHbcHKeAzKP4JH3D0dsvvado_Ps_Cn3VqLYWIs6K0TRtUyTi-QcnWQS69CyoH4aASp-jCVG_8Cw5hpBjlg0QkgKCEcBwlmek5QRgT7I5_GYCMJ4qe7XnOXhp5hhjBU4vUeSGlvZG64IdyT4YPQavXElU" />
 					<div class="absolute inset-0 bg-gradient-to-b from-primary/20 via-transparent to-background"></div>
 				</div>
 				<div class="relative z-10 text-center px-6 max-w-4xl">
-					<span class="inline-block px-4 py-1 mb-6 rounded-full bg-primary/20 backdrop-blur-md text-on-primary font-label-sm uppercase tracking-[0.2em]">
+					<span class="inline-block px-6 py-2 mb-8 rounded-full bg-white/10 backdrop-blur-lg text-white font-sans text-[10px] uppercase tracking-[0.4em]">
 						L'Expérience de l'Or Végétal
 					</span>
-					<h1 class="font-display-xl text-5xl md:text-display-xl text-white mb-8 drop-shadow-2xl leading-tight italic">
-						La Lumière au Coeur de la Nature
+					<h1 class="font-serif text-6xl md:text-8xl text-white mb-10 leading-[1.1] font-light">
+						La Lumière <br/> <span class="italic font-normal">au Coeur</span> du Jardin
 					</h1>
-					<p class="font-body-lg text-lg md:text-body-lg text-white/95 mb-12 max-w-2xl mx-auto leading-relaxed">
-						Un sanctuaire baigné de soleil. Redécouvrez le luxe de la lenteur.
+					<p class="font-sans text-white/80 mb-14 max-w-xl mx-auto leading-relaxed tracking-wide font-light">
+						Un sanctuaire ocre baigné de soleil. Redécouvrez le luxe du silence et la poésie de la nature.
 					</p>
-					<button class="bg-primary text-on-primary px-10 py-5 rounded-full font-label-sm uppercase tracking-widest hover:bg-tertiary hover:text-white transition-all duration-500 shadow-2xl font-black">
-						Réserver une Suite
-					</button>
+					<div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+						<button class="group relative px-12 py-5 overflow-hidden rounded-full bg-white transition-all duration-500">
+							<span class="relative z-10 font-sans text-[10px] font-bold uppercase tracking-[0.3em] text-[#231b00]">Découvrir les Suites</span>
+						</button>
+						<button class="px-12 py-5 rounded-full border border-white/30 text-white font-sans text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white/10 transition-all duration-500">
+							Le Jardin
+						</button>
+					</div>
 				</div>
 			</section>
 
 			{/* 2. PHILOSOPHIE SECTION */}
-			<section class="py-xl px-8 md:px-16 max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+			<section id="jardin" class="scroll-mt-24 py-xl px-8 md:px-16 max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
 				<div class="space-y-8 order-2 md:order-1">
-					<h2 class="font-headline-lg text-4xl md:text-headline-lg text-primary italic leading-tight">L'Architecture de la Lumière</h2>
+					<h2 class="font-headline-lg text-4xl md:text-headline-lg text-primary italic leading-tight">Le Charme Solaire du Jardin</h2>
 					<p class="font-body-lg text-on-surface/80 leading-relaxed">
-						Chaque baie vitrée de Verdant Refuge a été orientée pour capturer l'éclat doré de l'Atlantique, créant un dialogue permanent entre l'intérieur de marbre et le vert intense de notre forêt privée.
+						La terrasse ocre de notre maison d'hôte s'ouvre comme une scène suspendue entre un ciel d'azur intense et un jardin luxuriant. Bordé par une balustrade vert émeraude, cet espace devient un refuge où le temps s'arrête, bercé par le doux parfum des fougères suspendues et l'authenticité de la table en bois brut. Un véritable havre pour vos petits-déjeuners face à la nature.
 					</p>
-					<div class="grid grid-cols-2 gap-8 border-t border-primary/20 pt-8">
-						<div>
-							<span class="block text-3xl font-serif text-tertiary">12</span>
-							<span class="text-xs font-label-sm uppercase text-outline tracking-[0.2em] font-bold">Suites Or</span>
-						</div>
-						<div>
-							<span class="block text-3xl font-serif text-tertiary">4ha</span>
-							<span class="text-xs font-label-sm uppercase text-outline tracking-[0.2em] font-bold">Écrin de Nature</span>
-						</div>
-					</div>
 				</div>
 				<div class="relative order-1 md:order-2 group">
 					<div class="organic-shape-2 overflow-hidden h-[350px] md:h-[500px] shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]">
 						<img class="w-full h-full object-cover" alt="Intérieur" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBUc_VMgb-h3oXpWG8ANG4DDlg7f5Fpyyv5wAhgTBUxOkfLRXUg9OmJ2O3drfbZrOV2TmnuPfqQuk1205yi4RGxF_D6I8oLkrorAvKSWLXxa5v9EbgODTFIVtKsKHTb-XWTB5GKZ1iJ0Z-Re04lz19kAlaVXXnNtBzUSha06BeG-nqsmINpDEBsT1yi6Yf6c5p5vRruFClMq8GTZLuUUURj7hEcYunbmgdxcJ8AbrWNBzSQPjKhWTyX0c_CkkvVLxuaFT3utgI7p8" />
 					</div>
-					<div class="md:absolute -bottom-10 -left-10 glass px-8 py-10 md:px-12 md:py-12 rounded-[2.5rem] mt-8 md:mt-0 w-full md:w-auto md:max-w-lg shadow-2xl z-20 border-primary/20">
-						<p class="font-serif italic text-primary text-xl md:text-2xl leading-relaxed text-center md:text-left">
-							"Un lieu où l'or de la lumière se mêle à l'émeraude des arbres."
-						</p>
-					</div>
 				</div>
 			</section>
 
 			{/* 3. NOS SUITES SECTION */}
-			<section class="py-xl bg-surface-container-low overflow-hidden">
+			<section id="chambres" class="scroll-mt-24 py-xl bg-surface-container-low overflow-hidden">
 				<div class="max-w-[1440px] mx-auto px-8 md:px-16">
 					<div class="flex justify-between items-end mb-16">
 						<div>
-							<h2 class="font-headline-lg text-4xl md:text-headline-lg text-primary italic leading-tight">Évasions Dorées</h2>
+							<h2 class="font-headline-lg text-4xl md:text-headline-lg text-primary italic leading-tight">VOTRE CHAMBRE</h2>
 							<p class="font-body-md text-outline uppercase tracking-widest text-xs mt-2">Le luxe de l'espace et de la clarté.</p>
 						</div>
 						<a href="/chambres" class="text-tertiary font-label-sm uppercase tracking-widest border-b-2 border-primary pb-1 hidden md:block font-bold">Tout voir</a>
@@ -193,7 +204,7 @@ export function Home() {
             )}
 
 			{/* 7. LIVRE D'OR DYNAMIQUE + FORMULAIRE */}
-			<section class="py-xl px-8 md:px-16 max-w-[1440px] mx-auto overflow-hidden">
+			<section id="avis" class="scroll-mt-24 py-xl px-8 md:px-16 max-w-[1440px] mx-auto overflow-hidden">
 				<div class="text-center mb-20">
 					<h2 class="font-headline-lg text-4xl text-primary italic leading-tight">Instants Partagés</h2>
 					<p class="font-body-md text-tertiary uppercase tracking-widest text-[10px] font-black mt-2">Leur séjour au Refuge.</p>
@@ -202,14 +213,18 @@ export function Home() {
 					{avis.map((a, i) => (
 						<div class={`glass p-12 rounded-[3.5rem] shadow-2xl border-primary/10 relative ${i === 1 ? 'md:scale-105 bg-white/90 z-10' : ''}`}>
 							<div class="flex text-primary mb-8 gap-1">
-								{[...Array(a.note)].map(() => <span class="material-symbols-outlined text-xl">grade</span>)}
+								{[...Array(Math.max(0, parseInt(a.note) || 0))].map((_, idx) => (
+									<span key={idx} class="material-symbols-outlined text-xl">grade</span>
+								))}
 							</div>
-							<p class="font-serif italic text-on-surface/80 text-lg leading-relaxed mb-10">"{a.commentaire}"</p>
+							<p class="font-serif italic text-on-surface/80 text-lg leading-relaxed mb-10">"{a.commentaire || 'Sans commentaire'}"</p>
 							<div class="flex items-center gap-5">
-								<div class="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center font-serif text-xl font-bold">{a.nom_client[0]}</div>
+								<div class="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center font-serif text-xl font-bold">
+									{(a.nom_client || "?")[0].toUpperCase()}
+								</div>
 								<div>
-									<span class="block font-serif text-primary text-lg italic">{a.nom_client}</span>
-									<span class="text-[9px] font-black text-outline uppercase tracking-widest">{a.date_sejour}</span>
+									<span class="block font-serif text-primary text-lg italic">{a.nom_client || "Client Anonyme"}</span>
+									<span class="text-[9px] font-black text-outline uppercase tracking-widest">{a.date_sejour || "Date inconnue"}</span>
 								</div>
 							</div>
 						</div>

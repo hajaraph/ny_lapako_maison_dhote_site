@@ -1,26 +1,33 @@
 import { Hono } from 'hono';
-import { bdd } from '../bdd';
+import { db } from '../bdd';
+import { avisClients } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
 const routeAvis = new Hono();
 
-routeAvis.get('/', (c) => {
-    const data = bdd.query("SELECT * FROM avis_clients ORDER BY id DESC").all();
+routeAvis.get('/', async (c) => {
+    const data = await db.select().from(avisClients).orderBy(desc(avisClients.id)).all();
     return c.json(data);
 });
 
 routeAvis.post('/', async (c) => {
     const corps = await c.req.json();
-    bdd.run(
-        "INSERT INTO avis_clients (nom_client, commentaire, note, date_sejour) VALUES (?, ?, ?, ?)",
-        [corps.nom_client, corps.commentaire, corps.note, corps.date_sejour]
-    );
+    await db.insert(avisClients).values({
+        nom_client: corps.nom_client,
+        commentaire: corps.commentaire,
+        note: corps.note,
+        date_sejour: corps.date_sejour
+    }).run();
     return c.json({ message: "Avis soumis avec succès" }, 201);
 });
 
 routeAvis.patch('/:id/statut', async (c) => {
-    const id = c.req.param('id');
+    const id = parseInt(c.req.param('id'));
     const { statut } = await c.req.json();
-    bdd.run("UPDATE avis_clients SET statut = ? WHERE id = ?", [statut, id]);
+    await db.update(avisClients)
+        .set({ statut })
+        .where(eq(avisClients.id, id))
+        .run();
     return c.json({ message: "Statut mis à jour" });
 });
 

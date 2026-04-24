@@ -1,19 +1,24 @@
 import { Hono } from 'hono';
-import { bdd } from '../bdd';
+import { db } from '../bdd';
+import { evenements } from '../db/schema';
+import { asc } from 'drizzle-orm';
 
 const routeEvenements = new Hono();
 
-routeEvenements.get('/', (c) => {
-    const data = bdd.query("SELECT * FROM evenements ORDER BY date_evenement ASC").all();
+routeEvenements.get('/', async (c) => {
+    const data = await db.select().from(evenements).orderBy(asc(evenements.date_evenement)).all();
     return c.json(data);
 });
 
 routeEvenements.post('/', async (c) => {
     const corps = await c.req.json();
-    bdd.run(
-        "INSERT INTO evenements (titre, description, date_evenement, image_url, statut) VALUES (?, ?, ?, ?, ?)",
-        [corps.titre, corps.description, corps.date_evenement, corps.image_url, corps.statut]
-    );
+    await db.insert(evenements).values({
+        titre: corps.titre,
+        description: corps.description,
+        date_evenement: corps.date_evenement,
+        image_url: corps.image_url,
+        statut: corps.statut
+    }).run();
     return c.json({ message: "Événement créé" }, 201);
 });
 
