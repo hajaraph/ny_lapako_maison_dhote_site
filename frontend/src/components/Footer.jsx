@@ -9,8 +9,8 @@ import {
 export function Footer({ siteInfo }) {
 	const site = normalizeSiteInfo(siteInfo || DEFAULT_SITE_INFO);
 	const highlights = [
-		{ label: 'Suites', value: '6 espaces lumineux' },
-		{ label: 'Jardin', value: '4 hectares apaisés' },
+		{ label: 'Suites', value: 'Espaces lumineux' },
+		{ label: 'Jardin', value: 'Apaisés' },
 		{ label: 'Petit-déjeuner', value: 'Local et fait maison' },
 	];
 

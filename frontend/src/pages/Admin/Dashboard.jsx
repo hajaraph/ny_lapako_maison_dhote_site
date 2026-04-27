@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { api, clearAuthToken, getAuthToken, resolveBackendAssetUrl } from '../../api';
+import { ExpandableText } from '../../components/ExpandableText.jsx';
+import { PaginationControls, usePagination } from '../../components/Pagination.jsx';
 import { Reveal } from '../../components/Reveal.jsx';
+import { formatDisplayDate } from '../../lib/date.js';
 import { broadcastSiteInfoUpdate, createSiteInfoForm } from '../../lib/siteSettings.js';
 
 const navItems = [
@@ -358,6 +361,7 @@ function NewsManager({ data, onRefresh }) {
 	const [editionId, setEditionId] = useState(null);
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState(null);
+	const pagination = usePagination(data, 4);
 
 	useEffect(() => {
 		if (!imageFile) {
@@ -614,12 +618,12 @@ function NewsManager({ data, onRefresh }) {
 			</Reveal>
 
 			<div class="space-y-4">
-				{data.length === 0 ? (
+				{pagination.total === 0 ? (
 					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
 						Aucune actualité pour le moment. Créez-en une avec le formulaire ci-dessus.
 					</div>
 				) : (
-					data.map((actu, index) => (
+					pagination.pageItems.map((actu, index) => (
 						<Reveal
 							key={actu.id}
 							as="article"
@@ -634,10 +638,16 @@ function NewsManager({ data, onRefresh }) {
 							/>
 							<div class="p-6">
 								<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
-									{actu.date_publication || 'Date non définie'}
+									{formatDisplayDate(actu.date_publication, { fallback: 'Date non définie' })}
 								</div>
 								<h4 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{actu.titre}</h4>
-								<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70 text-flow">{actu.contenu}</p>
+								<ExpandableText
+									text={actu.contenu}
+									maxLength={180}
+									class="mt-4"
+									contentClass="text-sm leading-7 text-on-surface/70"
+									fallback="Aucun contenu."
+								/>
 								<div class="mt-6 flex flex-wrap items-center justify-between gap-4">
 									<div class="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
 										{actu.statut || 'brouillon'}
@@ -663,6 +673,14 @@ function NewsManager({ data, onRefresh }) {
 						</Reveal>
 					))
 				)}
+				<PaginationControls
+					page={pagination.page}
+					pageCount={pagination.pageCount}
+					total={pagination.total}
+					startIndex={pagination.startIndex}
+					endIndex={pagination.endIndex}
+					onPageChange={pagination.goToPage}
+				/>
 			</div>
 		</div>
 	);
@@ -685,6 +703,7 @@ function EventsManager({ data, onRefresh }) {
 	const [editionId, setEditionId] = useState(null);
 	const [message, setMessage] = useState(null);
 	const [saving, setSaving] = useState(false);
+	const pagination = usePagination(data, 4);
 
 	useEffect(() => {
 		if (!imageFile) {
@@ -928,12 +947,12 @@ function EventsManager({ data, onRefresh }) {
 			</Reveal>
 
 			<div class="space-y-4">
-				{data.length === 0 ? (
+				{pagination.total === 0 ? (
 					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
 						Aucun événement pour le moment. Ajoutez-en un avec le formulaire ci-dessus.
 					</div>
 				) : (
-					data.map((event, index) => (
+					pagination.pageItems.map((event, index) => (
 						<Reveal key={event.id} class="surface-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between" delay={index * 120}>
 							<div class="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row">
 								{resolveBackendAssetUrl(event.image_url) && (
@@ -948,10 +967,16 @@ function EventsManager({ data, onRefresh }) {
 								)}
 								<div class="min-w-0">
 									<div class="text-[10px] font-black uppercase tracking-[0.32em] text-primary">
-										{formatEventDate(event.date_evenement)}
+										{formatDisplayDate(event.date_evenement, { fallback: 'Date à définir' })}
 									</div>
 									<h4 class="mt-3 font-serif text-2xl italic text-on-surface text-flow">{event.titre}</h4>
-									<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70 text-flow">{event.description}</p>
+									<ExpandableText
+										text={event.description}
+										maxLength={160}
+										class="mt-4 max-w-2xl"
+										contentClass="text-sm leading-7 text-on-surface/70"
+										fallback="Aucune description."
+									/>
 									<div class="mt-4 flex flex-wrap items-center gap-2">
 										<span class="rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-tertiary">
 											{formatEventStatus(event.statut)}
@@ -984,34 +1009,17 @@ function EventsManager({ data, onRefresh }) {
 						</Reveal>
 					))
 				)}
+				<PaginationControls
+					page={pagination.page}
+					pageCount={pagination.pageCount}
+					total={pagination.total}
+					startIndex={pagination.startIndex}
+					endIndex={pagination.endIndex}
+					onPageChange={pagination.goToPage}
+				/>
 			</div>
 		</div>
 	);
-}
-
-function formatEventDate(value) {
-	if (!value) {
-		return 'Date à définir';
-	}
-
-	let parsedDate;
-
-	if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-		const [year, month, day] = value.split('-').map(Number);
-		parsedDate = new Date(year, month - 1, day);
-	} else {
-		parsedDate = new Date(value);
-	}
-
-	if (Number.isNaN(parsedDate.getTime())) {
-		return value;
-	}
-
-	return parsedDate.toLocaleDateString('fr-FR', {
-		day: '2-digit',
-		month: 'long',
-		year: 'numeric',
-	});
 }
 
 function formatEventStatus(statut) {
@@ -1032,52 +1040,74 @@ function formatEventStatus(statut) {
 }
 
 function ReviewsManager({ data, onModerer }) {
+	const pagination = usePagination(data, 4);
+
 	return (
 		<Reveal class="surface-card-strong p-8" delay={100}>
 			<h3 class="font-serif text-4xl italic text-on-surface">Livre d'or</h3>
 			<div class="mt-10 space-y-8">
-				{data.map((review, index) => (
-					<Reveal key={review.id ?? `${review.nom_client}-${index}`} class="flex gap-5 rounded-[2rem] border border-primary/10 bg-white/80 p-6" delay={index * 110}>
-						<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary font-serif text-xl font-bold">
-							{(review.nom_client || '?')[0].toUpperCase()}
-						</div>
-						<div class="min-w-0 flex-1 space-y-4">
-							<div class="flex flex-wrap items-center gap-3">
-								<span class="font-black uppercase tracking-[0.26em] text-on-surface text-flow">{review.nom_client || 'Client anonyme'}</span>
-								<span
-									class={`rounded-full px-3 py-2 text-[9px] font-black uppercase tracking-[0.32em] ${
-										review.statut === 'approuve' || review.statut === 'Approuvé'
-											? 'bg-tertiary/10 text-tertiary'
-											: 'bg-amber-100 text-amber-700'
-									}`}
-								>
-									{review.statut}
-								</span>
+				{pagination.total === 0 ? (
+					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
+						Aucun avis disponible pour le moment.
+					</div>
+				) : (
+					pagination.pageItems.map((review, index) => (
+						<Reveal key={review.id ?? `${review.nom_client}-${index}`} class="flex gap-5 rounded-[2rem] border border-primary/10 bg-white/80 p-6" delay={index * 110}>
+							<div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary font-serif text-xl font-bold">
+								{(review.nom_client || '?')[0].toUpperCase()}
 							</div>
+							<div class="min-w-0 flex-1 space-y-4">
+								<div class="flex flex-wrap items-center gap-3">
+									<span class="font-black uppercase tracking-[0.26em] text-on-surface text-flow">{review.nom_client || 'Client anonyme'}</span>
+									<span
+										class={`rounded-full px-3 py-2 text-[9px] font-black uppercase tracking-[0.32em] ${
+											review.statut === 'approuve' || review.statut === 'Approuvé'
+												? 'bg-tertiary/10 text-tertiary'
+												: 'bg-amber-100 text-amber-700'
+										}`}
+									>
+										{review.statut}
+									</span>
+								</div>
 
-							<p class="text-base italic leading-8 text-on-surface/75 text-flow">"{review.commentaire || 'Sans commentaire'}"</p>
+								<ExpandableText
+									text={review.commentaire}
+									maxLength={220}
+									contentClass="text-base italic leading-8 text-on-surface/75"
+									fallback="Sans commentaire"
+									quote
+								/>
 
-							<div class="flex flex-wrap gap-3 pt-2">
-								{review.statut !== 'approuve' && review.statut !== 'Approuvé' && (
+								<div class="flex flex-wrap gap-3 pt-2">
+									{review.statut !== 'approuve' && review.statut !== 'Approuvé' && (
+										<button
+											type="button"
+											onClick={() => onModerer(review.id, 'approuve')}
+											class="text-[10px] font-black uppercase tracking-[0.3em] text-tertiary transition-colors hover:text-tertiary/80"
+										>
+											Approuver
+										</button>
+									)}
 									<button
 										type="button"
-										onClick={() => onModerer(review.id, 'approuve')}
-										class="text-[10px] font-black uppercase tracking-[0.3em] text-tertiary transition-colors hover:text-tertiary/80"
+										onClick={() => onModerer(review.id, 'en_attente')}
+										class="text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:text-on-surface"
 									>
-										Approuver
+										Mettre en attente
 									</button>
-								)}
-								<button
-									type="button"
-									onClick={() => onModerer(review.id, 'en_attente')}
-									class="text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:text-on-surface"
-								>
-									Mettre en attente
-								</button>
+								</div>
 							</div>
-						</div>
-					</Reveal>
-				))}
+						</Reveal>
+					))
+				)}
+				<PaginationControls
+					page={pagination.page}
+					pageCount={pagination.pageCount}
+					total={pagination.total}
+					startIndex={pagination.startIndex}
+					endIndex={pagination.endIndex}
+					onPageChange={pagination.goToPage}
+				/>
 			</div>
 		</Reveal>
 	);
@@ -1095,6 +1125,7 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 	const [editionId, setEditionId] = useState(null);
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState(null);
+	const pagination = usePagination(data, 4);
 
 	const resetForm = () => {
 		setForm(accountFormInitial);
@@ -1277,12 +1308,12 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 			</Reveal>
 
 			<div class="space-y-4">
-				{data.length === 0 ? (
+				{pagination.total === 0 ? (
 					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
 						Aucun compte administrateur trouvé.
 					</div>
 				) : (
-					data.map((compte, index) => {
+					pagination.pageItems.map((compte, index) => {
 						const estCompteCourant = profil?.id === compte.id;
 
 						return (
@@ -1318,9 +1349,17 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 									</button>
 								</div>
 							</Reveal>
-						);
+							);
 					})
 				)}
+				<PaginationControls
+					page={pagination.page}
+					pageCount={pagination.pageCount}
+					total={pagination.total}
+					startIndex={pagination.startIndex}
+					endIndex={pagination.endIndex}
+					onPageChange={pagination.goToPage}
+				/>
 			</div>
 		</div>
 	);
@@ -1453,28 +1492,6 @@ function SiteSettingsManager({ data, setData }) {
 							onInput={(e) => setData({ ...data, check_in: e.target.value })}
 							class="field-input"
 							placeholder="Check-in dès 15h"
-						/>
-					</div>
-
-					<div class="space-y-3">
-						<label class="field-label">Copyright</label>
-						<input
-							type="text"
-							value={data.copyright_owner}
-							onInput={(e) => setData({ ...data, copyright_owner: e.target.value })}
-							class="field-input"
-							placeholder="Demondra"
-						/>
-					</div>
-
-					<div class="space-y-3">
-						<label class="field-label">Lien du copyright</label>
-						<input
-							type="url"
-							value={data.copyright_url}
-							onInput={(e) => setData({ ...data, copyright_url: e.target.value })}
-							class="field-input"
-							placeholder="https://github.com/hajaraph"
 						/>
 					</div>
 				</div>

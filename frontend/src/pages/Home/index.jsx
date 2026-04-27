@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, resolveBackendAssetUrl } from '../../api';
+import { ExpandableText } from '../../components/ExpandableText.jsx';
+import { PaginationControls, usePagination } from '../../components/Pagination.jsx';
 import { Reveal } from '../../components/Reveal.jsx';
+import { formatDisplayDate } from '../../lib/date.js';
 import { normalizeSiteInfo } from '../../lib/siteSettings.js';
 import debutImage from '../../assets/images_archi.jpeg';
 import heroImage from '../../assets/debut.png';
@@ -67,6 +70,11 @@ export function Home({ siteInfo }) {
 	const [envoiEnCours, setEnvoiEnCours] = useState(false);
 	const [formMessage, setFormMessage] = useState(null);
 	const commentaireLength = nouvelAvis.commentaire.length;
+	const suitesPagination = usePagination(suites, 3);
+	const momentsPagination = usePagination(moments, 3);
+	const actualitesPagination = usePagination(actualites, 3);
+	const evenementsPagination = usePagination(evenements, 3);
+	const avisPagination = usePagination(avis, 3);
 
 	useEffect(() => {
 		api.actualites
@@ -267,10 +275,18 @@ export function Home({ siteInfo }) {
 					/>
 
 					<div class="mt-12 grid gap-8 md:grid-cols-3">
-						{suites.map((suite, index) => (
+						{suitesPagination.pageItems.map((suite, index) => (
 							<SuiteCard key={suite.name} suite={suite} delay={index * 120} variant={['left', 'zoom', 'right'][index % 3]} />
 						))}
 					</div>
+					<PaginationControls
+						page={suitesPagination.page}
+						pageCount={suitesPagination.pageCount}
+						total={suitesPagination.total}
+						startIndex={suitesPagination.startIndex}
+						endIndex={suitesPagination.endIndex}
+						onPageChange={suitesPagination.goToPage}
+					/>
 				</div>
 			</section>
 
@@ -285,10 +301,18 @@ export function Home({ siteInfo }) {
 					/>
 
 					<div class="mt-12 grid gap-8 md:grid-cols-3">
-						{actualites.slice(0, 3).map((actu, index) => (
+						{actualitesPagination.pageItems.map((actu, index) => (
 							<ArticleCard key={actu.id ?? actu.titre} item={actu} delay={index * 120} variant={index % 2 === 0 ? 'mask' : 'zoom'} />
 						))}
 					</div>
+					<PaginationControls
+						page={actualitesPagination.page}
+						pageCount={actualitesPagination.pageCount}
+						total={actualitesPagination.total}
+						startIndex={actualitesPagination.startIndex}
+						endIndex={actualitesPagination.endIndex}
+						onPageChange={actualitesPagination.goToPage}
+					/>
 				</section>
 			)}
 
@@ -303,10 +327,18 @@ export function Home({ siteInfo }) {
 					/>
 
 				<div class="mt-12 grid gap-8 md:grid-cols-3">
-					{moments.map((moment, index) => (
+					{momentsPagination.pageItems.map((moment, index) => (
 						<MomentCard key={moment.title} moment={moment} delay={index * 120} variant={index % 2 === 0 ? 'left' : 'right'} />
 					))}
 				</div>
+				<PaginationControls
+					page={momentsPagination.page}
+					pageCount={momentsPagination.pageCount}
+					total={momentsPagination.total}
+					startIndex={momentsPagination.startIndex}
+					endIndex={momentsPagination.endIndex}
+					onPageChange={momentsPagination.goToPage}
+				/>
 			</section>
 
 			{evenements.length > 0 && (
@@ -321,10 +353,18 @@ export function Home({ siteInfo }) {
 						/>
 
 						<div class="mt-12 grid gap-6 md:grid-cols-3">
-							{evenements.map((event, index) => (
+							{evenementsPagination.pageItems.map((event, index) => (
 								<EventCard key={event.id ?? `${event.date_evenement}-${event.titre}`} event={event} delay={index * 120} variant={index % 2 === 0 ? 'right' : 'left'} />
 							))}
 						</div>
+						<PaginationControls
+							page={evenementsPagination.page}
+							pageCount={evenementsPagination.pageCount}
+							total={evenementsPagination.total}
+							startIndex={evenementsPagination.startIndex}
+							endIndex={evenementsPagination.endIndex}
+							onPageChange={evenementsPagination.goToPage}
+						/>
 					</div>
 				</section>
 			)}
@@ -339,22 +379,32 @@ export function Home({ siteInfo }) {
 					/>
 
 				<div class="mt-12 grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-					<div class="grid gap-6">
-						{avis.length > 0 ? (
-							avis.map((review, index) => (
-								<ReviewCard
-									key={review.id ?? `${review.nom_client}-${index}`}
-									review={review}
-									featured={index === 1}
-									delay={index * 120}
-									variant={index === 1 ? 'mask' : index % 2 === 0 ? 'lift' : 'fade'}
-								/>
-							))
-						) : (
-							<div class="surface-card p-8 text-sm leading-7 text-on-surface/70">
-								Les avis approuvés apparaîtront ici dès qu'ils seront publiés.
-							</div>
-						)}
+					<div class="space-y-6">
+						<div class="grid gap-6">
+							{avis.length > 0 ? (
+								<>{avisPagination.pageItems.map((review, index) => (
+									<ReviewCard
+										key={review.id ?? `${review.nom_client}-${index}`}
+										review={review}
+										featured={avisPagination.startIndex + index === 1}
+										delay={index * 120}
+										variant={index === 1 ? 'mask' : index % 2 === 0 ? 'lift' : 'fade'}
+									/>
+								))}</>
+							) : (
+								<div class="surface-card p-8 text-sm leading-7 text-on-surface/70">
+									Les avis approuvés apparaîtront ici dès qu'ils seront publiés.
+								</div>
+							)}
+						</div>
+						<PaginationControls
+							page={avisPagination.page}
+							pageCount={avisPagination.pageCount}
+							total={avisPagination.total}
+							startIndex={avisPagination.startIndex}
+							endIndex={avisPagination.endIndex}
+							onPageChange={avisPagination.goToPage}
+						/>
 					</div>
 
 					<div class="surface-card-strong p-8 lg:p-10">
@@ -503,6 +553,7 @@ function SuiteCard({ suite, delay = 0, variant = 'zoom' }) {
 
 function ArticleCard({ item, delay = 0, variant = 'mask' }) {
 	const image = resolveBackendAssetUrl(item.image_url) || `https://picsum.photos/seed/${item.id}/900/700`;
+	const publicationDate = formatDisplayDate(item.date_publication, { fallback: 'Date non définie' });
 
 	return (
 		<Reveal variant={variant} as="article" class="surface-card overflow-hidden transition-transform duration-500 hover:-translate-y-1" delay={delay}>
@@ -510,9 +561,15 @@ function ArticleCard({ item, delay = 0, variant = 'mask' }) {
 				<img class="h-64 w-full object-cover transition-transform duration-1000" src={image} alt={item.titre} loading="lazy" />
 			</div>
 			<div class="p-6">
-				<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">{item.date_publication}</div>
+				<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">{publicationDate}</div>
 				<h3 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{item.titre}</h3>
-				<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70 text-flow">{item.contenu}</p>
+				<ExpandableText
+					text={item.contenu}
+					maxLength={180}
+					class="mt-4"
+					contentClass="text-sm leading-7 text-on-surface/70"
+					fallback="Aucun contenu."
+				/>
 			</div>
 		</Reveal>
 	);
@@ -527,7 +584,13 @@ function MomentCard({ moment, delay = 0, variant = 'lift' }) {
 			<div class="p-6">
 				<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Instant</div>
 				<h3 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{moment.title}</h3>
-				<p class="mt-4 text-sm leading-7 text-on-surface/70 text-flow">{moment.description}</p>
+				<ExpandableText
+					text={moment.description}
+					maxLength={160}
+					class="mt-4"
+					contentClass="text-sm leading-7 text-on-surface/70"
+					fallback="Aucune description."
+				/>
 			</div>
 		</Reveal>
 	);
@@ -535,6 +598,7 @@ function MomentCard({ moment, delay = 0, variant = 'lift' }) {
 
 function EventCard({ event, delay = 0, variant = 'right' }) {
 	const image = resolveBackendAssetUrl(event.image_url);
+	const eventDate = formatDisplayDate(event.date_evenement, { fallback: 'Date à définir' });
 
 	return (
 		<Reveal variant={variant} as="article" class="surface-card p-6 transition-transform duration-500 hover:-translate-y-1" delay={delay}>
@@ -544,17 +608,23 @@ function EventCard({ event, delay = 0, variant = 'right' }) {
 				</div>
 			)}
 			<div class="inline-flex rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">
-				{event.date_evenement}
+				{eventDate}
 			</div>
 			<h3 class="mt-6 font-serif text-2xl italic text-on-surface text-flow">{event.titre}</h3>
-			<p class="mt-4 text-sm leading-7 text-on-surface/70 text-flow">{event.description}</p>
+			<ExpandableText
+				text={event.description}
+				maxLength={160}
+				class="mt-4"
+				contentClass="text-sm leading-7 text-on-surface/70"
+				fallback="Aucune description."
+			/>
 		</Reveal>
 	);
 }
 
 function ReviewCard({ review, featured = false, delay = 0, variant = 'lift' }) {
 	const note = Math.max(0, Math.min(5, Number.parseInt(review.note, 10) || 0));
-	const formattedDate = formatReviewDate(review.date_sejour);
+	const formattedDate = formatDisplayDate(review.date_sejour, { fallback: 'Date inconnue' });
 
 	return (
 		<Reveal variant={variant} as="article" class={`surface-card p-6 ${featured ? 'border-primary/20 bg-white shadow-lift' : ''}`} delay={delay}>
@@ -565,9 +635,14 @@ function ReviewCard({ review, featured = false, delay = 0, variant = 'lift' }) {
 					</span>
 				))}
 			</div>
-			<p class="mt-5 font-serif text-lg italic leading-8 text-on-surface/85 text-flow">
-				"{review.commentaire || 'Sans commentaire'}"
-			</p>
+			<ExpandableText
+				text={review.commentaire}
+				maxLength={220}
+				class="mt-5"
+				contentClass="font-serif text-lg italic leading-8 text-on-surface/85"
+				fallback="Sans commentaire"
+				quote
+			/>
 			<div class="mt-6 flex items-center gap-4">
 				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary font-serif text-lg font-bold">
 					{((review.nom_client || '?')[0] || '?').toUpperCase()}
@@ -579,29 +654,4 @@ function ReviewCard({ review, featured = false, delay = 0, variant = 'lift' }) {
 			</div>
 		</Reveal>
 	);
-}
-
-function formatReviewDate(value) {
-	if (!value) {
-		return 'Date inconnue';
-	}
-
-	let parsedDate;
-
-	if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-		const [year, month, day] = value.split('-').map(Number);
-		parsedDate = new Date(year, month - 1, day);
-	} else {
-		parsedDate = new Date(value);
-	}
-
-	if (Number.isNaN(parsedDate.getTime())) {
-		return value;
-	}
-
-	return parsedDate.toLocaleDateString('fr-FR', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric',
-	});
 }
