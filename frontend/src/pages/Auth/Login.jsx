@@ -1,19 +1,47 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
+import { api, getAuthToken, setAuthToken } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
 
 export function Login() {
 	const { route } = useLocation();
+	const [form, setForm] = useState({
+		email: '',
+		mot_de_passe: '',
+		remember: true,
+	});
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 
-	const handleLogin = (e) => {
+	useEffect(() => {
+		if (getAuthToken()) {
+			route('/admin/stats');
+		}
+	}, [route]);
+
+	const handleLogin = async (e) => {
 		e.preventDefault();
 		setLoading(true);
+		setError(null);
 
-		setTimeout(() => {
-			setLoading(false);
+		try {
+			const result = await api.auth.login({
+				email: form.email.trim(),
+				mot_de_passe: form.mot_de_passe,
+			});
+
+			if (!result?.token) {
+				throw new Error('Token manquant');
+			}
+
+			setAuthToken(result.token, form.remember);
 			route('/admin/stats');
-		}, 1200);
+		} catch (err) {
+			console.error('Erreur de connexion:', err);
+			setError(err?.status === 401 ? 'Identifiants invalides.' : 'La connexion a échoué. Merci de réessayer.');
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -52,6 +80,12 @@ export function Login() {
 							Utilisez vos identifiants administrateur pour ouvrir la session.
 						</p>
 
+						{error && (
+							<div class="mt-6 rounded-[1.5rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+								{error}
+							</div>
+						)}
+
 						<form onSubmit={handleLogin} class="mt-8 space-y-6">
 							<div class="space-y-3">
 								<label class="field-label">Identifiant</label>
@@ -62,7 +96,10 @@ export function Login() {
 									<input
 										type="email"
 										required
+										value={form.email}
+										onInput={(e) => setForm({ ...form, email: e.target.value })}
 										placeholder="admin@nylapako.fr"
+										autoComplete="username"
 										class="field-input pl-12"
 									/>
 								</div>
@@ -77,7 +114,10 @@ export function Login() {
 									<input
 										type="password"
 										required
+										value={form.mot_de_passe}
+										onInput={(e) => setForm({ ...form, mot_de_passe: e.target.value })}
 										placeholder="••••••••"
+										autoComplete="current-password"
 										class="field-input pl-12"
 									/>
 								</div>
@@ -85,7 +125,12 @@ export function Login() {
 
 							<div class="flex items-center justify-between gap-4">
 								<label class="flex items-center gap-2 text-sm text-outline">
-									<input type="checkbox" class="h-4 w-4 rounded border-primary/20 text-primary focus:ring-0" />
+									<input
+										type="checkbox"
+										checked={form.remember}
+										onChange={(e) => setForm({ ...form, remember: e.currentTarget.checked })}
+										class="h-4 w-4 rounded border-primary/20 text-primary focus:ring-0"
+									/>
 									<span>Se souvenir de moi</span>
 								</label>
 								<a href="#" class="text-[10px] font-black uppercase tracking-[0.3em] text-primary transition-colors hover:text-tertiary">

@@ -3,7 +3,7 @@ import { sign } from 'hono/jwt';
 import { db } from '../bdd';
 import { administrateurs } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
-import { JWT_SECRET } from '../config';
+import { JWT_ALG, JWT_SECRET } from '../config';
 
 const auth = new Hono();
 
@@ -29,7 +29,7 @@ auth.post('/login', async (c) => {
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24 heures
     };
 
-    const token = await sign(payload, JWT_SECRET);
+    const token = await sign(payload, JWT_SECRET, JWT_ALG);
 
     return c.json({ 
         token,

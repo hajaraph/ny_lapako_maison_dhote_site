@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import path from 'node:path';
+import { stat } from 'node:fs/promises';
 import { initialiserTables } from './src/bdd';
+import { UPLOADS_ROOT } from './src/lib/evenementMedia';
 
 // Importation des modules de routes
 import routeAuth from './src/routes/auth';
@@ -10,6 +13,32 @@ import routeEvenements from './src/routes/evenements';
 import routeAvis from './src/routes/avis';
 
 const app = new Hono();
+
+app.get('/uploads/*', async (c) => {
+  const { pathname } = new URL(c.req.url);
+  const cheminRelatif = pathname.replace(/^\/uploads\//, '');
+  const cheminAbsolu = path.resolve(UPLOADS_ROOT, cheminRelatif);
+  const cheminDansUploads = path.relative(UPLOADS_ROOT, cheminAbsolu);
+
+  if (cheminDansUploads.startsWith('..') || path.isAbsolute(cheminDansUploads)) {
+    return c.text('Not Found', 404);
+  }
+
+  try {
+    await stat(cheminAbsolu);
+  } catch {
+    return c.text('Not Found', 404);
+  }
+
+  const fichier = Bun.file(cheminAbsolu);
+
+  return new Response(fichier, {
+    headers: {
+      'Content-Type': fichier.type || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
+});
 
 // Configuration globale des CORS
 app.use('/*', cors({

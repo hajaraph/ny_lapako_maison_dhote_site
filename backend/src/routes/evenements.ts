@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import { db } from '../bdd';
 import { evenements } from '../db/schema';
 import { asc } from 'drizzle-orm';
+import { adminAuth } from '../middleware/adminAuth';
+import { lireEvenementDepuisRequete } from '../lib/evenementMedia';
 
 const routeEvenements = new Hono();
 
@@ -10,14 +12,14 @@ routeEvenements.get('/', async (c) => {
     return c.json(data);
 });
 
-routeEvenements.post('/', async (c) => {
-    const corps = await c.req.json();
+routeEvenements.post('/', adminAuth, async (c) => {
+    const { evenement } = await lireEvenementDepuisRequete(c);
     await db.insert(evenements).values({
-        titre: corps.titre,
-        description: corps.description,
-        date_evenement: corps.date_evenement,
-        image_url: corps.image_url,
-        statut: corps.statut
+        titre: evenement.titre,
+        description: evenement.description,
+        date_evenement: evenement.date_evenement,
+        image_url: evenement.image_url,
+        statut: evenement.statut
     }).run();
     return c.json({ message: "Événement créé" }, 201);
 });

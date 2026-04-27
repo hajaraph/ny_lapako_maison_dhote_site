@@ -3,6 +3,7 @@ import { LocationProvider, Router, Route, hydrate, prerender as ssr } from 'prea
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
 import { Home } from './pages/Home/index.jsx';
+import { Login } from './pages/Auth/Login.jsx';
 import { AdminDashboard } from './pages/Admin/Dashboard.jsx';
 import { NotFound } from './pages/_404.jsx';
 import './style.css';
@@ -21,6 +22,7 @@ export function App() {
 							<Footer />
 						</>
 					)} />
+					<Route path="/login" component={Login} />
 					<Route path="/admin" component={AdminDashboard} />
 					<Route path="/admin/:tab" component={AdminDashboard} />
 					<Route default component={NotFound} />

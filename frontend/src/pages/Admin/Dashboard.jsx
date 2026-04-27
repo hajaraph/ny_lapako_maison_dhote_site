@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
-import { api } from '../../api';
+import { api, clearAuthToken, getAuthToken, resolveBackendAssetUrl } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
 
 const navItems = [
@@ -24,34 +24,66 @@ export function AdminDashboard() {
 	const currentTab = url.split('/')[2] || 'stats';
 	const [donnees, setDonnees] = useState([]);
 	const [profil, setProfil] = useState(null);
+	const [statistiques, setStatistiques] = useState(null);
 	const [chargement, setChargement] = useState(true);
+	const [rafraichissement, setRafraichissement] = useState(0);
 
 	const navigate = (tab) => route(`/admin/${tab}`);
+	const deconnexion = () => {
+		clearAuthToken();
+		route('/login');
+	};
+	const rafraichir = () => {
+		setRafraichissement((value) => value + 1);
+	};
 
 	useEffect(() => {
 		let alive = true;
 
 		const load = async () => {
+			if (!getAuthToken()) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
 			setChargement(true);
+			setStatistiques(null);
 
 			try {
-				if (currentTab === 'news') {
-					const items = await api.actualites.lister();
+				const dataProfil = await api.admin.getProfil();
+				if (!alive) {
+					return;
+				}
+
+				setProfil(dataProfil);
+
+				if (currentTab === 'stats') {
+					const dataStats = await api.admin.stats();
+					if (alive) {
+						setStatistiques(dataStats);
+						setDonnees([]);
+					}
+				} else if (currentTab === 'news') {
+					const items = await api.admin.actualites.lister();
 					if (alive) setDonnees(Array.isArray(items) ? items : []);
 				} else if (currentTab === 'events') {
-					const items = await api.evenements.lister();
+					const items = await api.admin.evenements.lister();
 					if (alive) setDonnees(Array.isArray(items) ? items : []);
 				} else if (currentTab === 'reviews') {
-					const items = await api.avis.lister();
+					const items = await api.admin.avis.lister();
 					if (alive) setDonnees(Array.isArray(items) ? items : []);
-				} else if (currentTab === 'profile') {
-					const data = await api.admin.getProfil();
-					if (alive) setProfil(data);
 				} else if (alive) {
 					setDonnees([]);
 				}
 			} catch (error) {
 				console.error('Erreur chargement admin:', error);
+				if (error?.status === 401) {
+					clearAuthToken();
+					route('/login');
+					return;
+				}
+
 				if (alive) {
 					setDonnees([]);
 				}
@@ -65,28 +97,40 @@ export function AdminDashboard() {
 		return () => {
 			alive = false;
 		};
-	}, [currentTab]);
+	}, [currentTab, rafraichissement, route]);
 
 	const supprimerElement = async (id) => {
 		if (!confirm('Supprimer cet élément ?')) return;
 
 		try {
 			if (currentTab === 'news') {
-				await api.actualites.supprimer(id);
+				await api.admin.actualites.supprimer(id);
 			}
 			setDonnees(donnees.filter((item) => item.id !== id));
+			rafraichir();
 		} catch (error) {
 			console.error('Erreur suppression:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
 			alert('Erreur suppression');
 		}
 	};
 
 	const modererAvis = async (id, statut) => {
 		try {
-			await api.avis.moderer(id, statut);
+			await api.admin.avis.moderer(id, statut);
 			setDonnees(donnees.map((item) => (item.id === id ? { ...item, statut } : item)));
+			rafraichir();
 		} catch (error) {
 			console.error('Erreur modération:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
 			alert('Erreur modération');
 		}
 	};
@@ -123,23 +167,23 @@ export function AdminDashboard() {
 						</nav>
 					</div>
 
-					<div class="space-y-4">
+						<div class="space-y-4">
 						<div class="rounded-[2rem] border border-white/10 bg-white/5 p-4">
 							<p class="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">Raccourci</p>
 							<p class="mt-2 text-sm leading-7 text-white/70">
-								Retour rapide à la page d'accueil ou passage sur la section publique.
+								Déconnexion sécurisée ou retour rapide vers la page d'accueil.
 							</p>
 						</div>
 						<button
 							type="button"
-							onClick={() => route('/')}
+							onClick={deconnexion}
 							class="flex w-full items-center gap-4 rounded-[1.75rem] bg-white/10 px-5 py-4 text-white transition-colors duration-300 hover:bg-white/15"
 						>
 							<span class="material-symbols-outlined">logout</span>
-							<span class="text-[10px] font-black uppercase tracking-[0.3em]">Quitter</span>
-						</button>
-					</div>
-				</aside>
+							<span class="text-[10px] font-black uppercase tracking-[0.3em]">Déconnexion</span>
+							</button>
+						</div>
+					</aside>
 
 				<main class="load-rise flex-1 rounded-[2.75rem] border border-white/70 bg-white/72 p-5 shadow-soft backdrop-blur-2xl md:p-8 lg:p-10">
 					<header class="flex flex-col gap-4 border-b border-primary/10 pb-6 md:flex-row md:items-center md:justify-between">
@@ -151,16 +195,26 @@ export function AdminDashboard() {
 						</div>
 
 						{profil && (
-							<div class="flex items-center gap-3 rounded-full border border-primary/10 bg-white px-3 py-2 shadow-soft">
-								<img
-									src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00`}
-									alt={profil.nom}
-									class="h-11 w-11 rounded-full"
-								/>
-								<div class="pr-2">
-									<div class="text-xs font-black uppercase tracking-[0.28em] text-on-surface">{profil.nom}</div>
-									<div class="text-[10px] uppercase tracking-[0.28em] text-outline">{profil.email}</div>
+							<div class="flex flex-wrap items-center gap-3">
+								<div class="flex items-center gap-3 rounded-full border border-primary/10 bg-white px-3 py-2 shadow-soft">
+									<img
+										src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00`}
+										alt={profil.nom}
+										class="h-11 w-11 rounded-full"
+									/>
+									<div class="pr-2">
+										<div class="text-xs font-black uppercase tracking-[0.28em] text-on-surface">{profil.nom}</div>
+										<div class="text-[10px] uppercase tracking-[0.28em] text-outline">{profil.email}</div>
+									</div>
 								</div>
+								<button
+									type="button"
+									onClick={deconnexion}
+									class="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+								>
+									<span class="material-symbols-outlined text-[18px]">logout</span>
+									<span>Déconnexion</span>
+								</button>
 							</div>
 						)}
 					</header>
@@ -172,9 +226,9 @@ export function AdminDashboard() {
 							</div>
 						) : (
 							<>
-								{currentTab === 'stats' && <StatsOverview />}
+								{currentTab === 'stats' && <StatsOverview stats={statistiques} />}
 								{currentTab === 'news' && <NewsManager data={donnees} onSupprimer={supprimerElement} />}
-								{currentTab === 'events' && <EventsManager data={donnees} />}
+								{currentTab === 'events' && <EventsManager data={donnees} onRefresh={rafraichir} />}
 								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
 								{currentTab === 'profile' && profil && <ProfileManager profil={profil} setProfil={setProfil} />}
 							</>
@@ -222,12 +276,19 @@ function MobileNavLink({ icon, active, onClick }) {
 	);
 }
 
-function StatsOverview() {
+function StatsOverview({ stats }) {
+	const totalActualites = Number(stats?.actualitesTotal || 0);
+	const totalEvenements = Number(stats?.evenementsTotal || 0);
+	const avisEnAttente = Number(stats?.avisEnAttente || 0);
+	const moyenneNote = Number(stats?.moyenneNote || 0).toFixed(1);
+	const avisApprouves = Number(stats?.avisApprouves || 0);
+
 	return (
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-			<StatCard label="Occupation" value="89%" icon="bed" hint="Moyenne du mois" delay={80} />
-			<StatCard label="Avis à modérer" value="5" icon="forum" hint="Attente de validation" delay={140} />
-			<StatCard label="Événements" value="3" icon="event" hint="Programmés ce trimestre" delay={200} />
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+			<StatCard label="Actualités" value={String(totalActualites)} icon="newspaper" hint="Contenus gérés par l'équipe" delay={80} />
+			<StatCard label="Événements" value={String(totalEvenements)} icon="event" hint="Programmés ou archivés" delay={140} />
+			<StatCard label="Avis à modérer" value={String(avisEnAttente)} icon="forum" hint={`${avisApprouves} avis déjà approuvés`} delay={200} />
+			<StatCard label="Note moyenne" value={`${moyenneNote}/5`} icon="star" hint="Calculée sur les avis déposés" delay={260} />
 		</div>
 	);
 }
@@ -250,7 +311,12 @@ function NewsManager({ data, onSupprimer }) {
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 			{data.map((actu, index) => (
 				<Reveal key={actu.id} as="article" class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={index * 120}>
-					<img src={actu.image_url || 'https://picsum.photos/seed/1/800/600'} alt={actu.titre} class="h-64 w-full object-cover" loading="lazy" />
+					<img
+						src={resolveBackendAssetUrl(actu.image_url) || 'https://picsum.photos/seed/1/800/600'}
+						alt={actu.titre}
+						class="h-64 w-full object-cover"
+						loading="lazy"
+					/>
 					<div class="p-6">
 						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">{actu.date_publication}</div>
 						<h4 class="mt-4 font-serif text-2xl italic text-on-surface">{actu.titre}</h4>
@@ -279,23 +345,367 @@ function NewsManager({ data, onSupprimer }) {
 	);
 }
 
-function EventsManager({ data }) {
+const eventFormInitial = {
+	titre: '',
+	description: '',
+	date_evenement: '',
+	image_url: '',
+	statut: 'planifie',
+};
+
+function EventsManager({ data, onRefresh }) {
+	const { route } = useLocation();
+	const [form, setForm] = useState(eventFormInitial);
+	const [imageFile, setImageFile] = useState(null);
+	const [imagePreview, setImagePreview] = useState('');
+	const [imageInputKey, setImageInputKey] = useState(0);
+	const [editionId, setEditionId] = useState(null);
+	const [message, setMessage] = useState(null);
+	const [saving, setSaving] = useState(false);
+
+	useEffect(() => {
+		if (!imageFile) {
+			setImagePreview('');
+			return undefined;
+		}
+
+		const objectUrl = URL.createObjectURL(imageFile);
+		setImagePreview(objectUrl);
+
+		return () => URL.revokeObjectURL(objectUrl);
+	}, [imageFile]);
+
+	const resetForm = () => {
+		setForm(eventFormInitial);
+		setImageFile(null);
+		setImageInputKey((value) => value + 1);
+		setEditionId(null);
+	};
+
+	const lancerEdition = (event) => {
+		setEditionId(event.id);
+		setForm({
+			titre: event.titre || '',
+			description: event.description || '',
+			date_evenement: event.date_evenement || '',
+			image_url: event.image_url || '',
+			statut: event.statut || 'planifie',
+		});
+		setImageFile(null);
+		setImageInputKey((value) => value + 1);
+		setMessage(null);
+	};
+
+	const enregistrer = async (e) => {
+		e.preventDefault();
+		setSaving(true);
+		setMessage(null);
+
+		try {
+			const payload = new FormData();
+			payload.append('titre', form.titre);
+			payload.append('description', form.description);
+			payload.append('date_evenement', form.date_evenement);
+			payload.append('image_url', form.image_url || '');
+			payload.append('statut', form.statut);
+
+			if (imageFile) {
+				payload.append('image', imageFile);
+			}
+
+			if (editionId) {
+				await api.admin.evenements.mettreAJour(editionId, payload);
+				setMessage({ type: 'success', text: 'Événement mis à jour.' });
+			} else {
+				await api.admin.evenements.creer(payload);
+				setMessage({ type: 'success', text: 'Événement créé.' });
+			}
+
+			resetForm();
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur événement:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
+			setMessage({
+				type: 'error',
+				text: editionId ? "La mise à jour a échoué." : "La création a échoué.",
+			});
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const supprimer = async (id) => {
+		if (!confirm('Supprimer cet événement ?')) {
+			return;
+		}
+
+		try {
+			await api.admin.evenements.supprimer(id);
+			if (editionId === id) {
+				resetForm();
+			}
+			setMessage({ type: 'success', text: 'Événement supprimé.' });
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur suppression événement:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
+			setMessage({ type: 'error', text: 'La suppression a échoué.' });
+		}
+	};
+
 	return (
-		<div class="space-y-4">
-			{data.map((event, index) => (
-				<Reveal key={event.id} class="surface-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between" delay={index * 120}>
+		<div class="space-y-8">
+			<Reveal class="surface-card-strong p-8 lg:p-10" delay={80}>
+				<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 					<div>
-						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-primary">{event.date_evenement}</div>
-						<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{event.titre}</h4>
-						<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">{event.description}</p>
+						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+							{editionId ? 'Modifier un événement' : 'Créer un événement'}
+						</div>
+						<h3 class="mt-4 font-serif text-4xl italic text-on-surface">
+							{editionId ? 'Réglages de l’événement' : 'Ajouter une date au calendrier'}
+						</h3>
+						<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">
+							Le formulaire ci-dessous alimente directement les événements publics et la vue admin.
+						</p>
 					</div>
-					<div class="rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-tertiary">
-						{event.statut || 'Planifié'}
+
+					{editionId && (
+						<button
+							type="button"
+							onClick={resetForm}
+							class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+						>
+							Annuler l'édition
+						</button>
+					)}
+				</div>
+
+				{message && (
+					<div
+						class={`mt-6 rounded-[1.5rem] px-4 py-3 text-sm ${
+							message.type === 'success' ? 'bg-tertiary/10 text-tertiary' : 'bg-rose-50 text-rose-700'
+						}`}
+					>
+						{message.text}
 					</div>
-				</Reveal>
-			))}
+				)}
+
+				<form class="mt-8 space-y-6" onSubmit={enregistrer}>
+					<div class="grid gap-6 md:grid-cols-2">
+						<div class="space-y-3">
+							<label class="field-label">Titre</label>
+							<input
+								type="text"
+								required
+								value={form.titre}
+								onInput={(e) => setForm({ ...form, titre: e.target.value })}
+								class="field-input"
+								placeholder="Soirée musique live"
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Date</label>
+							<input
+								type="date"
+								value={form.date_evenement}
+								onInput={(e) => setForm({ ...form, date_evenement: e.target.value })}
+								class="field-input"
+							/>
+						</div>
+
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">Description</label>
+							<textarea
+								rows="4"
+								value={form.description}
+								onInput={(e) => setForm({ ...form, description: e.target.value })}
+								class="field-textarea"
+								placeholder="Décrivez le déroulé de l'événement..."
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Image</label>
+							<input
+								key={imageInputKey}
+								type="file"
+								accept="image/*"
+								onChange={(e) => setImageFile(e.currentTarget.files?.[0] || null)}
+								class="field-input cursor-pointer py-3"
+							/>
+							<p class="text-[10px] font-black uppercase tracking-[0.28em] text-outline">
+								Image stockée sur notre serveur
+							</p>
+							{(imagePreview || resolveBackendAssetUrl(form.image_url)) && (
+								<div class="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-white shadow-soft">
+									<img
+										src={imagePreview || resolveBackendAssetUrl(form.image_url)}
+										alt="Aperçu de l'événement"
+										class="h-44 w-full object-cover"
+									/>
+								</div>
+							)}
+							{imageFile ? (
+								<div class="text-xs font-semibold text-on-surface/65">
+									Fichier sélectionné : {imageFile.name}
+								</div>
+							) : form.image_url ? (
+								<div class="text-xs font-semibold text-on-surface/65">
+									L'image actuelle sera conservée si tu n'en ajoutes pas une nouvelle.
+								</div>
+							) : null}
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Statut</label>
+							<select
+								value={form.statut}
+								onChange={(e) => setForm({ ...form, statut: e.currentTarget.value })}
+								class="field-input"
+							>
+								<option value="planifie">Planifié</option>
+								<option value="actif">Actif</option>
+								<option value="termine">Terminé</option>
+								<option value="annule">Annulé</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="flex flex-col gap-3 sm:flex-row">
+						<button
+							type="submit"
+							disabled={saving}
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+						>
+							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : 'Créer'}
+						</button>
+						{editionId && (
+							<button
+								type="button"
+								onClick={resetForm}
+								class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+							>
+								Réinitialiser
+							</button>
+						)}
+					</div>
+				</form>
+			</Reveal>
+
+			<div class="space-y-4">
+				{data.length === 0 ? (
+					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
+						Aucun événement pour le moment. Ajoutez-en un avec le formulaire ci-dessus.
+					</div>
+				) : (
+					data.map((event, index) => (
+						<Reveal key={event.id} class="surface-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between" delay={index * 120}>
+							<div class="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row">
+								{resolveBackendAssetUrl(event.image_url) && (
+									<div class="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-white shadow-soft">
+										<img
+											src={resolveBackendAssetUrl(event.image_url)}
+											alt={event.titre}
+											class="h-44 w-full object-cover sm:h-28 sm:w-28"
+											loading="lazy"
+										/>
+									</div>
+								)}
+								<div class="min-w-0">
+									<div class="text-[10px] font-black uppercase tracking-[0.32em] text-primary">
+										{formatEventDate(event.date_evenement)}
+									</div>
+									<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{event.titre}</h4>
+									<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">{event.description}</p>
+									<div class="mt-4 flex flex-wrap items-center gap-2">
+										<span class="rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-tertiary">
+											{formatEventStatus(event.statut)}
+										</span>
+										{event.image_url && (
+											<span class="truncate rounded-full bg-white/80 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+												Image liée
+											</span>
+										)}
+									</div>
+								</div>
+							</div>
+
+							<div class="flex flex-wrap gap-3">
+								<button
+									type="button"
+									onClick={() => lancerEdition(event)}
+									class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+								>
+									Modifier
+								</button>
+								<button
+									type="button"
+									onClick={() => supprimer(event.id)}
+									class="inline-flex items-center justify-center rounded-full bg-rose-50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-rose-700 transition-colors hover:bg-rose-100"
+								>
+									Supprimer
+								</button>
+							</div>
+						</Reveal>
+					))
+				)}
+			</div>
 		</div>
 	);
+}
+
+function formatEventDate(value) {
+	if (!value) {
+		return 'Date à définir';
+	}
+
+	let parsedDate;
+
+	if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+		const [year, month, day] = value.split('-').map(Number);
+		parsedDate = new Date(year, month - 1, day);
+	} else {
+		parsedDate = new Date(value);
+	}
+
+	if (Number.isNaN(parsedDate.getTime())) {
+		return value;
+	}
+
+	return parsedDate.toLocaleDateString('fr-FR', {
+		day: '2-digit',
+		month: 'long',
+		year: 'numeric',
+	});
+}
+
+function formatEventStatus(statut) {
+	const normalized = String(statut || 'planifie').toLowerCase();
+
+	switch (normalized) {
+		case 'actif':
+			return 'Actif';
+		case 'termine':
+		case 'terminé':
+			return 'Terminé';
+		case 'annule':
+		case 'annulé':
+			return 'Annulé';
+		default:
+			return 'Planifié';
+	}
 }
 
 function ReviewsManager({ data, onModerer }) {
@@ -351,12 +761,19 @@ function ReviewsManager({ data, onModerer }) {
 }
 
 function ProfileManager({ profil, setProfil }) {
+	const { route } = useLocation();
+
 	const enregistrer = async () => {
 		try {
 			await api.admin.updateProfil(profil);
 			alert('Profil sauvegardé !');
 		} catch (error) {
 			console.error('Erreur sauvegarde profil:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
 			alert('Erreur sauvegarde');
 		}
 	};

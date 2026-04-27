@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { db } from '../bdd';
 import { avisClients } from '../db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { adminAuth } from '../middleware/adminAuth';
 
 const routeAvis = new Hono();
 
@@ -21,8 +22,13 @@ routeAvis.post('/', async (c) => {
     return c.json({ message: "Avis soumis avec succès" }, 201);
 });
 
-routeAvis.patch('/:id/statut', async (c) => {
-    const id = parseInt(c.req.param('id'));
+routeAvis.patch('/:id/statut', adminAuth, async (c) => {
+    const id = Number(c.req.param('id'));
+
+    if (!Number.isFinite(id)) {
+        return c.json({ error: 'Identifiant invalide' }, 400);
+    }
+
     const { statut } = await c.req.json();
     await db.update(avisClients)
         .set({ statut })

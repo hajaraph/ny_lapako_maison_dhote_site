@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { api } from '../../api';
+import { api, resolveBackendAssetUrl } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
 import debutImage from '../../assets/images_archi.jpeg';
 import heroImage from '../../assets/debut.png';
@@ -369,11 +369,10 @@ export function Home() {
 								<div class="space-y-3">
 									<label class="field-label">Date du séjour</label>
 									<input
-										type="text"
+										type="date"
 										value={nouvelAvis.date_sejour}
 										onInput={(e) => setNouvelAvis({ ...nouvelAvis, date_sejour: e.target.value })}
 										class="field-input"
-										placeholder="Mai 2026"
 									/>
 								</div>
 							</div>
@@ -462,7 +461,7 @@ function SuiteCard({ suite, delay = 0 }) {
 }
 
 function ArticleCard({ item, delay = 0 }) {
-	const image = item.image_url || `https://picsum.photos/seed/${item.id}/900/700`;
+	const image = resolveBackendAssetUrl(item.image_url) || `https://picsum.photos/seed/${item.id}/900/700`;
 
 	return (
 		<Reveal as="article" class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={delay}>
@@ -494,8 +493,15 @@ function MomentCard({ moment, delay = 0 }) {
 }
 
 function EventCard({ event, delay = 0 }) {
+	const image = resolveBackendAssetUrl(event.image_url);
+
 	return (
 		<Reveal as="article" class="surface-card p-6 transition-transform duration-300 hover:-translate-y-1" delay={delay}>
+			{image && (
+				<div class="overflow-hidden rounded-[1.5rem]">
+					<img class="h-56 w-full object-cover transition-transform duration-700 hover:scale-105" src={image} alt={event.titre} loading="lazy" />
+				</div>
+			)}
 			<div class="inline-flex rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">
 				{event.date_evenement}
 			</div>
