@@ -27,6 +27,18 @@ function formatStatsAvis(avis: Array<{ note?: number | null; statut?: string | n
     return { avisApprouves, avisEnAttente, moyenneNote };
 }
 
+function normaliserTexte(valeur: unknown) {
+    return typeof valeur === 'string' ? valeur.trim() : '';
+}
+
+function emailValide(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function estErreurEmailUnique(erreur: unknown) {
+    return erreur instanceof Error && erreur.message.includes('UNIQUE constraint failed: administrateurs.email');
+}
+
 routeAdmin.get('/stats', async (c) => {
     const [actualitesData, evenementsData, avisData] = await Promise.all([
         db.select().from(actualites).all(),
@@ -83,6 +95,156 @@ routeAdmin.patch('/profil', async (c) => {
         .run();
     
     return c.json({ message: "Profil admin mis à jour avec succès" });
+});
+
+routeAdmin.get('/comptes', async (c) => {
+    const comptes = await db.select({
+        id: administrateurs.id,
+        nom: administrateurs.nom,
+        email: administrateurs.email,
+    }).from(administrateurs).orderBy(asc(administrateurs.nom)).all();
+
+    return c.json(comptes);
+});
+
+routeAdmin.post('/comptes', async (c) => {
+    const corps = await c.req.json();
+    const nom = normaliserTexte(corps?.nom);
+    const email = normaliserTexte(corps?.email).toLowerCase();
+    const motDePasse = normaliserTexte(corps?.mot_de_passe);
+
+    if (!nom || !email || !motDePasse) {
+        return c.json({ error: 'Nom, email et mot de passe sont requis' }, 400);
+    }
+
+    if (!emailValide(email)) {
+        return c.json({ error: 'Adresse email invalide' }, 400);
+    }
+
+    if (motDePasse.length < 8) {
+        return c.json({ error: 'Le mot de passe doit contenir au moins 8 caractères' }, 400);
+    }
+
+    try {
+        await db.insert(administrateurs).values({
+            nom,
+            email,
+            mot_de_passe: motDePasse,
+        }).run();
+    } catch (erreur) {
+        if (estErreurEmailUnique(erreur)) {
+            return c.json({ error: 'Un compte avec cet email existe déjà' }, 409);
+        }
+
+        throw erreur;
+    }
+
+    return c.json({ message: 'Compte administrateur créé' }, 201);
+});
+
+routeAdmin.patch('/comptes/:id', async (c) => {
+    const id = Number(c.req.param('id'));
+
+    if (!Number.isFinite(id)) {
+        return c.json({ error: 'Identifiant invalide' }, 400);
+    }
+
+    const compteExistant = await db.select({ id: administrateurs.id })
+        .from(administrateurs)
+        .where(eq(administrateurs.id, id))
+        .limit(1)
+        .get();
+
+    if (!compteExistant) {
+        return c.json({ error: 'Compte introuvable' }, 404);
+    }
+
+    const corps = await c.req.json();
+    const updateData: { nom?: string; email?: string; mot_de_passe?: string } = {};
+
+    if (corps?.nom !== undefined) {
+        const nom = normaliserTexte(corps.nom);
+        if (!nom) {
+            return c.json({ error: 'Le nom ne peut pas être vide' }, 400);
+        }
+        updateData.nom = nom;
+    }
+
+    if (corps?.email !== undefined) {
+        const email = normaliserTexte(corps.email).toLowerCase();
+        if (!email || !emailValide(email)) {
+            return c.json({ error: 'Adresse email invalide' }, 400);
+        }
+        updateData.email = email;
+    }
+
+    if (corps?.mot_de_passe !== undefined) {
+        const motDePasse = normaliserTexte(corps.mot_de_passe);
+        if (!motDePasse) {
+            return c.json({ error: 'Le mot de passe ne peut pas être vide' }, 400);
+        }
+
+        if (motDePasse.length < 8) {
+            return c.json({ error: 'Le mot de passe doit contenir au moins 8 caractères' }, 400);
+        }
+
+        updateData.mot_de_passe = motDePasse;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+        return c.json({ error: 'Aucune donnée à mettre à jour' }, 400);
+    }
+
+    try {
+        await db.update(administrateurs)
+            .set(updateData)
+            .where(eq(administrateurs.id, id))
+            .run();
+    } catch (erreur) {
+        if (estErreurEmailUnique(erreur)) {
+            return c.json({ error: 'Un compte avec cet email existe déjà' }, 409);
+        }
+
+        throw erreur;
+    }
+
+    return c.json({ message: 'Compte administrateur mis à jour' });
+});
+
+routeAdmin.delete('/comptes/:id', async (c) => {
+    const id = Number(c.req.param('id'));
+
+    if (!Number.isFinite(id)) {
+        return c.json({ error: 'Identifiant invalide' }, 400);
+    }
+
+    const adminIdConnecte = lireAdminId(c);
+    if (adminIdConnecte === null) {
+        return c.json({ error: 'Jeton administrateur invalide' }, 401);
+    }
+
+    if (adminIdConnecte === id) {
+        return c.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, 400);
+    }
+
+    const compteExistant = await db.select({ id: administrateurs.id })
+        .from(administrateurs)
+        .where(eq(administrateurs.id, id))
+        .limit(1)
+        .get();
+
+    if (!compteExistant) {
+        return c.json({ error: 'Compte introuvable' }, 404);
+    }
+
+    const tousLesComptes = await db.select({ id: administrateurs.id }).from(administrateurs).all();
+    if (tousLesComptes.length <= 1) {
+        return c.json({ error: 'Impossible de supprimer le dernier compte administrateur' }, 400);
+    }
+
+    await db.delete(administrateurs).where(eq(administrateurs.id, id)).run();
+
+    return c.json({ message: 'Compte administrateur supprimé' });
 });
 
 routeAdmin.get('/actualites', async (c) => {

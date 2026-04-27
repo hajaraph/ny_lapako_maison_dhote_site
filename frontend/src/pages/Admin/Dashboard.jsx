@@ -8,6 +8,7 @@ const navItems = [
 	{ tab: 'news', icon: 'auto_awesome', label: 'Actualités' },
 	{ tab: 'events', icon: 'event', label: 'Événements' },
 	{ tab: 'reviews', icon: 'forum', label: 'Avis clients' },
+	{ tab: 'accounts', icon: 'manage_accounts', label: 'Comptes admin' },
 	{ tab: 'profile', icon: 'settings', label: 'Mon compte' },
 ];
 
@@ -16,6 +17,7 @@ const tabTitles = {
 	news: 'Actualités',
 	events: 'Événements',
 	reviews: 'Avis clients',
+	accounts: 'Comptes administrateurs',
 	profile: 'Paramètres',
 };
 
@@ -72,6 +74,9 @@ export function AdminDashboard() {
 					if (alive) setDonnees(Array.isArray(items) ? items : []);
 				} else if (currentTab === 'reviews') {
 					const items = await api.admin.avis.lister();
+					if (alive) setDonnees(Array.isArray(items) ? items : []);
+				} else if (currentTab === 'accounts') {
+					const items = await api.admin.comptes.lister();
 					if (alive) setDonnees(Array.isArray(items) ? items : []);
 				} else if (alive) {
 					setDonnees([]);
@@ -230,6 +235,14 @@ export function AdminDashboard() {
 								{currentTab === 'news' && <NewsManager data={donnees} onSupprimer={supprimerElement} />}
 								{currentTab === 'events' && <EventsManager data={donnees} onRefresh={rafraichir} />}
 								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
+								{currentTab === 'accounts' && (
+									<AccountsManager
+										data={donnees}
+										profil={profil}
+										setProfil={setProfil}
+										onRefresh={rafraichir}
+									/>
+								)}
 								{currentTab === 'profile' && profil && <ProfileManager profil={profil} setProfil={setProfil} />}
 							</>
 						)}
@@ -757,6 +770,249 @@ function ReviewsManager({ data, onModerer }) {
 				))}
 			</div>
 		</Reveal>
+	);
+}
+
+const accountFormInitial = {
+	nom: '',
+	email: '',
+	mot_de_passe: '',
+};
+
+function AccountsManager({ data, profil, setProfil, onRefresh }) {
+	const { route } = useLocation();
+	const [form, setForm] = useState(accountFormInitial);
+	const [editionId, setEditionId] = useState(null);
+	const [saving, setSaving] = useState(false);
+	const [message, setMessage] = useState(null);
+
+	const resetForm = () => {
+		setForm(accountFormInitial);
+		setEditionId(null);
+	};
+
+	const lancerEdition = (compte) => {
+		setEditionId(compte.id);
+		setForm({
+			nom: compte.nom || '',
+			email: compte.email || '',
+			mot_de_passe: '',
+		});
+		setMessage(null);
+	};
+
+	const lireErreur = (error, fallback) => {
+		if (error?.data && typeof error.data === 'object' && (error.data.error || error.data.message)) {
+			return error.data.error || error.data.message;
+		}
+		return error?.message || fallback;
+	};
+
+	const enregistrer = async (e) => {
+		e.preventDefault();
+
+		const payload = {
+			nom: form.nom.trim(),
+			email: form.email.trim().toLowerCase(),
+		};
+		const motDePasse = form.mot_de_passe.trim();
+
+		if (!payload.nom || !payload.email) {
+			setMessage({ type: 'error', text: 'Le nom et l’email sont obligatoires.' });
+			return;
+		}
+
+		if (!editionId && !motDePasse) {
+			setMessage({ type: 'error', text: 'Le mot de passe est obligatoire pour créer un compte.' });
+			return;
+		}
+
+		if (motDePasse) {
+			payload.mot_de_passe = motDePasse;
+		}
+
+		setSaving(true);
+		setMessage(null);
+
+		try {
+			if (editionId) {
+				await api.admin.comptes.mettreAJour(editionId, payload);
+				setMessage({ type: 'success', text: 'Compte administrateur mis à jour.' });
+
+				if (profil?.id === editionId) {
+					setProfil({ ...profil, nom: payload.nom, email: payload.email });
+				}
+			} else {
+				await api.admin.comptes.creer(payload);
+				setMessage({ type: 'success', text: 'Compte administrateur créé.' });
+			}
+
+			resetForm();
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur gestion comptes:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+			setMessage({ type: 'error', text: lireErreur(error, "L'opération a échoué.") });
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const supprimer = async (compte) => {
+		if (!confirm(`Supprimer le compte ${compte.email} ?`)) {
+			return;
+		}
+
+		try {
+			await api.admin.comptes.supprimer(compte.id);
+			setMessage({ type: 'success', text: 'Compte administrateur supprimé.' });
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur suppression compte:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+			setMessage({ type: 'error', text: lireErreur(error, 'La suppression a échoué.') });
+		}
+	};
+
+	return (
+		<div class="space-y-8">
+			<Reveal class="surface-card-strong p-8 lg:p-10" delay={90}>
+				<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+					<div>
+						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+							{editionId ? 'Modifier un compte admin' : 'Créer un compte admin'}
+						</div>
+						<h3 class="mt-4 font-serif text-4xl italic text-on-surface">
+							{editionId ? 'Mise à jour du compte' : 'Ajouter un administrateur'}
+						</h3>
+					</div>
+
+					{editionId && (
+						<button
+							type="button"
+							onClick={resetForm}
+							class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+						>
+							Annuler l'édition
+						</button>
+					)}
+				</div>
+
+				{message && (
+					<div
+						class={`mt-6 rounded-[1.5rem] px-4 py-3 text-sm ${
+							message.type === 'success' ? 'bg-tertiary/10 text-tertiary' : 'bg-rose-50 text-rose-700'
+						}`}
+					>
+						{message.text}
+					</div>
+				)}
+
+				<form class="mt-8 space-y-6" onSubmit={enregistrer}>
+					<div class="grid gap-6 md:grid-cols-2">
+						<div class="space-y-3">
+							<label class="field-label">Nom</label>
+							<input
+								type="text"
+								required
+								value={form.nom}
+								onInput={(e) => setForm({ ...form, nom: e.target.value })}
+								class="field-input"
+								placeholder="Nom complet"
+							/>
+						</div>
+						<div class="space-y-3">
+							<label class="field-label">Email</label>
+							<input
+								type="email"
+								required
+								value={form.email}
+								onInput={(e) => setForm({ ...form, email: e.target.value })}
+								class="field-input"
+								placeholder="admin@nylapako.fr"
+							/>
+						</div>
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">
+								{editionId ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe'}
+							</label>
+							<input
+								type="password"
+								required={!editionId}
+								value={form.mot_de_passe}
+								onInput={(e) => setForm({ ...form, mot_de_passe: e.target.value })}
+								class="field-input"
+								placeholder={editionId ? 'Laisser vide pour conserver' : 'Minimum 8 caractères'}
+							/>
+						</div>
+					</div>
+					<div class="flex flex-col gap-3 sm:flex-row">
+						<button
+							type="submit"
+							disabled={saving}
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+						>
+							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : 'Créer le compte'}
+						</button>
+					</div>
+				</form>
+			</Reveal>
+
+			<div class="space-y-4">
+				{data.length === 0 ? (
+					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
+						Aucun compte administrateur trouvé.
+					</div>
+				) : (
+					data.map((compte, index) => {
+						const estCompteCourant = profil?.id === compte.id;
+
+						return (
+							<Reveal key={compte.id} class="surface-card flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between" delay={index * 110}>
+								<div>
+									<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+										Administrateur
+									</div>
+									<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{compte.nom}</h4>
+									<p class="mt-2 text-sm leading-7 text-on-surface/70">{compte.email}</p>
+								</div>
+
+								<div class="flex flex-wrap items-center gap-3">
+									{estCompteCourant && (
+										<span class="rounded-full bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-primary">
+											Compte actif
+										</span>
+									)}
+									<button
+										type="button"
+										onClick={() => lancerEdition(compte)}
+										class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+									>
+										Modifier
+									</button>
+									<button
+										type="button"
+										onClick={() => supprimer(compte)}
+										disabled={estCompteCourant}
+										class="inline-flex items-center justify-center rounded-full bg-rose-50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-55"
+									>
+										Supprimer
+									</button>
+								</div>
+							</Reveal>
+						);
+					})
+				)}
+			</div>
+		</div>
 	);
 }
 

@@ -1,4 +1,8 @@
-const BASE_URL = 'http://localhost:3000';
+const DEFAULT_BASE_URL = 'http://localhost:3000';
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = typeof configuredBaseUrl === 'string' && configuredBaseUrl.trim() !== ''
+	? configuredBaseUrl.trim().replace(/\/+$/, '')
+	: DEFAULT_BASE_URL;
 const LOCAL_TOKEN_KEY = 'nylapako_admin_token';
 const SESSION_TOKEN_KEY = 'nylapako_admin_session_token';
 
@@ -128,6 +132,12 @@ export const api = {
 		getProfil: () => requete('/admin/profil', 'GET', null, { auth: true }),
 		updateProfil: (data) => requete('/admin/profil', 'PATCH', data, { auth: true }),
 		stats: () => requete('/admin/stats', 'GET', null, { auth: true }),
+		comptes: {
+			lister: () => requete('/admin/comptes', 'GET', null, { auth: true }),
+			creer: (data) => requete('/admin/comptes', 'POST', data, { auth: true }),
+			mettreAJour: (id, data) => requete(`/admin/comptes/${id}`, 'PATCH', data, { auth: true }),
+			supprimer: (id) => requete(`/admin/comptes/${id}`, 'DELETE', null, { auth: true }),
+		},
 		actualites: {
 			lister: () => requete('/admin/actualites', 'GET', null, { auth: true }),
 			creer: (data) => requete('/admin/actualites', 'POST', data, { auth: true }),
