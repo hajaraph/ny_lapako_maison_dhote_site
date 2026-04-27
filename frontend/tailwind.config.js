@@ -8,35 +8,35 @@ export default {
   theme: {
     extend: {
       "colors": {
-              "primary": "#d0af2f", // Jaune Moutarde / Or (Ancien Tertiary)
-              "on-primary": "#231b00",
-              "primary-container": "#ffe179",
-              "on-primary-container": "#524300",
-              "primary-fixed": "#ffe179",
-              "primary-fixed-dim": "#e6c443",
-              "on-primary-fixed": "#231b00",
-              "on-primary-fixed-variant": "#524300",
+              "primary": "#c19a2e",
+              "on-primary": "#1d1700",
+              "primary-container": "#ecdb99",
+              "on-primary-container": "#4a3800",
+              "primary-fixed": "#ecdb99",
+              "primary-fixed-dim": "#d0b34f",
+              "on-primary-fixed": "#1d1700",
+              "on-primary-fixed-variant": "#4a3800",
 
-              "secondary": "#00658e", // Bleu Mer (Inchangé)
-              
-              "tertiary": "#006d36", // Émeraude (Ancien Primary)
+              "secondary": "#315c68",
+
+              "tertiary": "#14563f",
               "on-tertiary": "#ffffff",
-              "tertiary-container": "#50c878",
-              "on-tertiary-container": "#005025",
-              "tertiary-fixed": "#83fba5",
-              "tertiary-fixed-dim": "#66dd8b",
-              "on-tertiary-fixed": "#005025",
+              "tertiary-container": "#bfe2ce",
+              "on-tertiary-container": "#0e3928",
+              "tertiary-fixed": "#d6f1df",
+              "tertiary-fixed-dim": "#97d2aa",
+              "on-tertiary-fixed": "#0e3928",
 
-              "background": "#fdfaf1", // Un blanc encore plus chaud, ivoire
-              "surface": "#fdfaf1",
-              "on-surface": "#1c1b12",
+              "background": "#faf7f0",
+              "surface": "#ffffff",
+              "on-surface": "#1b1a14",
               "on-surface-variant": "#5f5a4f",
-              "outline": "#7a776e",
-              "surface-container-lowest": "#fffdf6",
-              "surface-container": "#f4f1e6",
-              "surface-container-low": "#faf7ec",
-              "surface-container-high": "#eeebe0",
-              "surface-container-highest": "#e7e1d3"
+              "outline": "#776f61",
+              "surface-container-lowest": "#fffdf8",
+              "surface-container": "#f4ede2",
+              "surface-container-low": "#faf5ec",
+              "surface-container-high": "#eee5d6",
+              "surface-container-highest": "#e2d7c5"
       },
       "fontSize": {
               "display-xl": ["clamp(3.5rem, 8vw, 7rem)", { "lineHeight": "0.95", "letterSpacing": "-0.06em" }],

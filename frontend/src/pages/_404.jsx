@@ -17,9 +17,15 @@ export function NotFound() {
 					<a href="/" class="pill-button">
 						Retour à l'accueil
 					</a>
-					<a href="/#contact" class="pill-button-ghost">
+					<button
+						type="button"
+						onClick={() => {
+							window.location.href = '/#contact';
+						}}
+						class="pill-button-ghost"
+					>
 						Nous contacter
-					</a>
+					</button>
 				</div>
 			</Reveal>
 		</section>

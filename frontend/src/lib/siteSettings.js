@@ -9,6 +9,9 @@ const DEFAULT_SITE_INFO_RAW = {
 	copyright_url: 'https://github.com/hajaraph',
 };
 
+export const SITE_INFO_STORAGE_KEY = 'nylapako_site_info';
+export const SITE_INFO_UPDATED_EVENT = 'nylapako:site-info-updated';
+
 function cleanText(value, fallback = '') {
 	if (typeof value !== 'string') {
 		return fallback;
@@ -29,6 +32,51 @@ export const DEFAULT_SITE_INFO = {
 	...DEFAULT_SITE_INFO_RAW,
 	address_lines: splitAddressLines(DEFAULT_SITE_INFO_RAW.address),
 };
+
+export function readStoredSiteInfo() {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+
+	try {
+		const raw = window.localStorage.getItem(SITE_INFO_STORAGE_KEY);
+		if (!raw) {
+			return null;
+		}
+
+		return normalizeSiteInfo(JSON.parse(raw));
+	} catch {
+		return null;
+	}
+}
+
+export function saveSiteInfoSnapshot(data) {
+	const normalized = normalizeSiteInfo(data);
+
+	if (typeof window !== 'undefined') {
+		try {
+			window.localStorage.setItem(SITE_INFO_STORAGE_KEY, JSON.stringify(normalized));
+		} catch {
+			// Ignoré: le cache local n'est qu'un accélérateur de synchronisation.
+		}
+	}
+
+	return normalized;
+}
+
+export function broadcastSiteInfoUpdate(data) {
+	const normalized = saveSiteInfoSnapshot(data);
+
+	if (typeof window !== 'undefined') {
+		try {
+			window.dispatchEvent(new CustomEvent(SITE_INFO_UPDATED_EVENT, { detail: normalized }));
+		} catch {
+			// Ignoré: le rafraîchissement reste assuré par le prochain GET /site-info.
+		}
+	}
+
+	return normalized;
+}
 
 export function normalizeSiteInfo(data = {}) {
 	const address = cleanText(data.address, DEFAULT_SITE_INFO_RAW.address);

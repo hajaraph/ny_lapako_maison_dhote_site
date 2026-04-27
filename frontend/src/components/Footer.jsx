@@ -37,7 +37,7 @@ export function Footer({ siteInfo }) {
 	];
 
 	return (
-		<footer id="contact" class="relative overflow-hidden border-t border-primary/10 bg-[#17150f] text-white">
+		<footer id="contact" class="relative overflow-hidden scroll-mt-28 border-t border-primary/10 bg-[#121611] text-white">
 			<div class="absolute -top-24 right-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl orb-drift"></div>
 			<div class="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-tertiary/15 blur-3xl orb-drift"></div>
 
@@ -58,7 +58,7 @@ export function Footer({ siteInfo }) {
 									</p>
 								</div>
 
-								<a href="/#chambres" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-primary transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-on-surface">
+								<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-primary transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-on-surface">
 									Voir les suites
 								</a>
 							</div>

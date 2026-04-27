@@ -1,10 +1,10 @@
 export function Header() {
 	const links = [
-		{ href: '/#esprit', label: "L'esprit" },
-		{ href: '/#jardin', label: 'Le jardin' },
-		{ href: '/#chambres', label: 'Suites' },
-		{ href: '/#avis', label: 'Avis' },
-		{ href: '/#contact', label: 'Contact' },
+		{ href: '#esprit', label: "L'esprit" },
+		{ href: '#jardin', label: 'Le jardin' },
+		{ href: '#suites', label: 'Suites' },
+		{ href: '#avis', label: 'Avis' },
+		{ href: '#contact', label: 'Contact' },
 	];
 
 	return (
@@ -34,10 +34,10 @@ export function Header() {
 					</nav>
 
 					<div class="flex items-center gap-3">
-						<a href="/#contact" class="hidden sm:inline-flex pill-button-ghost">
+						<a href="#contact" class="hidden sm:inline-flex pill-button-ghost">
 							Nous contacter
 						</a>
-						<a href="/#avis" class="pill-button">
+						<a href="#contact" class="pill-button">
 							Réserver
 						</a>
 					</div>

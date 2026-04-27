@@ -8,20 +8,56 @@ import { Home } from './pages/Home/index.jsx';
 import { Login } from './pages/Auth/Login.jsx';
 import { AdminDashboard } from './pages/Admin/Dashboard.jsx';
 import { NotFound } from './pages/_404.jsx';
-import { DEFAULT_SITE_INFO, normalizeSiteInfo } from './lib/siteSettings.js';
+import {
+	DEFAULT_SITE_INFO,
+	SITE_INFO_STORAGE_KEY,
+	SITE_INFO_UPDATED_EVENT,
+	normalizeSiteInfo,
+	readStoredSiteInfo,
+	saveSiteInfoSnapshot,
+} from './lib/siteSettings.js';
 import './style.css';
 
 export function App() {
-	const [siteInfo, setSiteInfo] = useState(DEFAULT_SITE_INFO);
+	const [siteInfo, setSiteInfo] = useState(() => readStoredSiteInfo() || DEFAULT_SITE_INFO);
 
 	useEffect(() => {
 		let alive = true;
+
+		const appliquerSiteInfo = (data) => {
+			if (!alive || !data) {
+				return;
+			}
+
+			setSiteInfo(normalizeSiteInfo(data));
+		};
+
+		const gererMajSiteInfo = (event) => {
+			appliquerSiteInfo(event?.detail);
+		};
+
+		const gererMajStockage = (event) => {
+			if (event?.key !== SITE_INFO_STORAGE_KEY || !event.newValue) {
+				return;
+			}
+
+			try {
+				appliquerSiteInfo(JSON.parse(event.newValue));
+			} catch {
+				// Ignoré: la prochaine réponse API remettra l'état au propre.
+			}
+		};
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener(SITE_INFO_UPDATED_EVENT, gererMajSiteInfo);
+			window.addEventListener('storage', gererMajStockage);
+		}
 
 		api.siteInfo
 			.lire()
 			.then((data) => {
 				if (alive) {
-					setSiteInfo(normalizeSiteInfo(data));
+					setSiteInfo(saveSiteInfoSnapshot(data));
 				}
 			})
 			.catch((error) => {
@@ -30,6 +66,11 @@ export function App() {
 
 		return () => {
 			alive = false;
+
+			if (typeof window !== 'undefined') {
+				window.removeEventListener(SITE_INFO_UPDATED_EVENT, gererMajSiteInfo);
+				window.removeEventListener('storage', gererMajStockage);
+			}
 		};
 	}, []);
 

@@ -25,6 +25,16 @@ Ce journal doit être mis à jour à chaque changement important pour garder une
   - `frontend/src/api.js`
   - `frontend/src/pages/Admin/Dashboard.jsx`
 
+### 2026-04-27 - Synchronisation des infos du site
+- Le site public se met désormais à jour quand les infos du site sont modifiées dans l'admin.
+- Synchronisation ajoutée via un cache local et un événement navigateur pour couvrir :
+  - la même fenêtre,
+  - les autres onglets du même navigateur.
+- Fichiers modifiés :
+  - `frontend/src/lib/siteSettings.js`
+  - `frontend/src/index.jsx`
+  - `frontend/src/pages/Admin/Dashboard.jsx`
+
 ### 2026-04-27 - Informations publiques du site rendues dynamiques
 - Ajout d'un stockage dédié pour les informations publiques du site :
   - adresse,

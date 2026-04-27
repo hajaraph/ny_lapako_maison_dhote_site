@@ -124,7 +124,7 @@ export function Home({ siteInfo }) {
 
 	return (
 		<div class="relative overflow-hidden">
-			<section id="esprit" class="relative isolate overflow-hidden pb-20 pt-32 lg:pb-28 lg:pt-36">
+			<section id="esprit" class="relative isolate overflow-hidden scroll-mt-28 pb-20 pt-32 lg:scroll-mt-32 lg:pb-28 lg:pt-36">
 				<div class="absolute inset-0">
 					<img class="hero-zoom h-full w-full object-cover" alt="Patio de la maison d'hôtes" src={heroImage} loading="eager" />
 					<div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,27,18,0.7)_0%,rgba(28,27,18,0.42)_48%,rgba(253,250,241,0.98)_100%)]"></div>
@@ -139,7 +139,7 @@ export function Home({ siteInfo }) {
 						</span>
 						<h1 class="mt-8 max-w-2xl font-serif text-5xl leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-display-xl">
 							La lumière
-							<span class="text-sheen block bg-[linear-gradient(90deg,#d0af2f_0%,#fff4c5_25%,#d0af2f_50%,#ffe179_75%,#d0af2f_100%)] bg-clip-text text-transparent">
+							<span class="text-sheen block bg-[linear-gradient(90deg,#c19a2e_0%,#f0de9b_25%,#c19a2e_50%,#e8cf79_75%,#c19a2e_100%)] bg-clip-text text-transparent">
 								prend son temps.
 							</span>
 						</h1>
@@ -148,12 +148,12 @@ export function Home({ siteInfo }) {
 						</p>
 
 						<div class="mt-10 flex flex-wrap gap-4">
-							<a href="/#chambres" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary">
-								Découvrir les suites
-							</a>
-							<a href="/#jardin" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/15">
-								Explorer le jardin
-							</a>
+						<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary">
+							Découvrir les suites
+						</a>
+						<a href="#jardin" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/15">
+							Explorer le jardin
+						</a>
 						</div>
 
 						<div class="mt-10 flex flex-wrap gap-3">
@@ -170,7 +170,7 @@ export function Home({ siteInfo }) {
 						<div class="surface-card-strong p-4">
 							<div class="relative overflow-hidden rounded-[1.75rem]">
 								<img class="hero-zoom h-[28rem] w-full object-cover" alt="Petit-déjeuner artisanal" src={moments[0].image} loading="eager" />
-								<div class="absolute inset-0 bg-gradient-to-t from-[#1c1b12]/55 via-transparent to-transparent"></div>
+								<div class="absolute inset-0 bg-gradient-to-t from-[#111611]/58 via-transparent to-transparent"></div>
 							</div>
 
 							<div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -198,7 +198,7 @@ export function Home({ siteInfo }) {
 				</div>
 			</section>
 
-			<section id="jardin" class="section-shell py-24 lg:py-28">
+			<section id="jardin" class="section-shell scroll-mt-28 py-24 lg:scroll-mt-32 lg:py-28">
 				<div class="grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
 					<Reveal class="order-2 lg:order-1" delay={80}>
 						<span class="section-kicker">Le jardin</span>
@@ -244,11 +244,11 @@ export function Home({ siteInfo }) {
 				</div>
 			</section>
 
-			<section id="chambres" class="bg-surface-container-lowest/70 py-24 lg:py-28">
+			<section id="suites" class="bg-surface-container-lowest/70 scroll-mt-28 py-24 lg:scroll-mt-32 lg:py-28">
 				<div class="section-shell">
 					<SectionHeading
 						kicker="Nos suites"
-						title="Des chambres pensées comme des refuges."
+						title="Des suites pensées comme des refuges."
 						description="Lignes douces, matières naturelles et lumière filtrée composent trois signatures différentes, mais toujours calmes et élégantes."
 						delay={60}
 					/>
@@ -313,7 +313,7 @@ export function Home({ siteInfo }) {
 				</section>
 			)}
 
-			<section id="avis" class="section-shell py-24 lg:py-28">
+			<section id="avis" class="section-shell scroll-mt-28 py-24 lg:scroll-mt-32 lg:py-28">
 					<SectionHeading
 						kicker="Livre d'or"
 						title="Les séjours laissent une trace."
@@ -452,7 +452,7 @@ function SuiteCard({ suite, delay = 0 }) {
 					alt={suite.name}
 					loading="lazy"
 				/>
-				<div class="absolute inset-0 bg-gradient-to-t from-[#1c1b12]/55 via-transparent to-transparent"></div>
+				<div class="absolute inset-0 bg-gradient-to-t from-[#111611]/58 via-transparent to-transparent"></div>
 				<div class="absolute left-5 top-5 rounded-full bg-white/85 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-on-surface backdrop-blur">
 					{suite.tag}
 				</div>

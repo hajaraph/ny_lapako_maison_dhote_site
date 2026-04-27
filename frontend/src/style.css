@@ -9,11 +9,11 @@
     @apply bg-background text-on-surface font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container;
     min-height: 100vh;
     overflow-x: hidden;
-    background-color: #fdfaf1;
+    background-color: #faf7f0;
     background-image:
-      radial-gradient(circle at 12% 15%, rgba(208, 175, 47, 0.14), transparent 26%),
-      radial-gradient(circle at 88% 0%, rgba(0, 109, 54, 0.12), transparent 22%),
-      linear-gradient(180deg, #fdfaf1 0%, #fbf6ea 45%, #f7f0e3 100%);
+      radial-gradient(circle at 12% 15%, rgba(193, 154, 46, 0.13), transparent 26%),
+      radial-gradient(circle at 88% 0%, rgba(20, 86, 63, 0.1), transparent 22%),
+      linear-gradient(180deg, #faf7f0 0%, #f6f0e6 45%, #ece3d3 100%);
     background-attachment: fixed;
   }
   a {
@@ -55,9 +55,9 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     border-radius: 9999px;
-    border: 1px solid rgba(208, 175, 47, 0.18);
-    background: rgba(255, 255, 255, 0.7);
-    color: #5f5a4f;
+    border: 1px solid rgba(20, 86, 63, 0.14);
+    background: rgba(255, 255, 255, 0.76);
+    color: #5d584d;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.28em;
@@ -69,25 +69,25 @@
     font-size: clamp(2.4rem, 4vw, 4.9rem);
     line-height: 0.98;
     letter-spacing: -0.05em;
-    color: #d0af2f;
+    color: #14563f;
   }
   .section-copy {
     font-size: 1.02rem;
     line-height: 1.85;
-    color: rgba(28, 27, 18, 0.8);
+    color: rgba(27, 26, 20, 0.8);
   }
   .surface-card {
     border-radius: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.74);
-    box-shadow: 0 20px 60px rgba(28, 27, 18, 0.08);
+    border: 1px solid rgba(20, 86, 63, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 20px 60px rgba(27, 26, 20, 0.08);
     backdrop-filter: blur(24px);
   }
   .surface-card-strong {
     border-radius: 2.5rem;
-    border: 1px solid rgba(208, 175, 47, 0.12);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 30px 100px rgba(28, 27, 18, 0.12);
+    border: 1px solid rgba(193, 154, 46, 0.12);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 30px 100px rgba(27, 26, 20, 0.12);
     backdrop-filter: blur(26px);
   }
   .pill-button {
@@ -100,35 +100,35 @@
     font-weight: 800;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    background: #1c1b12;
-    color: #fdfaf1;
-    box-shadow: 0 16px 40px rgba(28, 27, 18, 0.15);
+    background: #173128;
+    color: #faf7f0;
+    box-shadow: 0 16px 40px rgba(27, 26, 20, 0.16);
     transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
   }
   .pill-button:hover {
     transform: translateY(-1px);
-    background: #d0af2f;
-    color: #231b00;
+    background: #c19a2e;
+    color: #1d1700;
   }
   .pill-button-ghost {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    border: 1px solid rgba(208, 175, 47, 0.2);
-    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(20, 86, 63, 0.18);
+    background: rgba(255, 255, 255, 0.74);
     padding: 1rem 1.5rem;
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #1c1b12;
+    color: #173128;
     transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
   }
   .pill-button-ghost:hover {
     transform: translateY(-1px);
-    border-color: rgba(208, 175, 47, 0.55);
-    background: rgba(255, 225, 121, 0.18);
+    border-color: rgba(193, 154, 46, 0.52);
+    background: rgba(193, 154, 46, 0.14);
   }
   .field-label {
     display: block;
@@ -137,24 +137,24 @@
     font-weight: 800;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: #7a776e;
+    color: #766f62;
   }
   .field-input,
   .field-textarea {
     width: 100%;
     border-radius: 1.25rem;
-    border: 1px solid rgba(208, 175, 47, 0.12);
-    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(20, 86, 63, 0.14);
+    background: rgba(255, 255, 255, 0.88);
     padding: 1rem 1.25rem;
     font-size: 0.98rem;
-    color: #1c1b12;
+    color: #1b1a14;
     outline: none;
     transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
   }
   .field-input:focus,
   .field-textarea:focus {
-    border-color: rgba(208, 175, 47, 0.7);
-    box-shadow: 0 0 0 4px rgba(208, 175, 47, 0.12);
+    border-color: rgba(193, 154, 46, 0.72);
+    box-shadow: 0 0 0 4px rgba(193, 154, 46, 0.12);
   }
   .field-textarea {
     border-radius: 1.5rem;
@@ -163,8 +163,8 @@
   }
   .glass-panel {
     border-radius: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.36);
-    background: rgba(255, 255, 255, 0.64);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.68);
     backdrop-filter: blur(24px);
   }
   .hero-orb {

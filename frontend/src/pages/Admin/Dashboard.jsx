@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { api, clearAuthToken, getAuthToken, resolveBackendAssetUrl } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
-import { createSiteInfoForm } from '../../lib/siteSettings.js';
+import { broadcastSiteInfoUpdate, createSiteInfoForm } from '../../lib/siteSettings.js';
 
 const navItems = [
 	{ tab: 'stats', icon: 'dashboard', label: 'Vue globale' },
@@ -151,9 +151,9 @@ export function AdminDashboard() {
 	};
 
 	return (
-		<div class="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(208,175,47,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(0,109,54,0.08),transparent_28%),linear-gradient(180deg,#f8f3e7_0%,#fdfaf1_100%)] text-on-surface">
+		<div class="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(193,154,46,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(20,86,63,0.10),transparent_28%),linear-gradient(180deg,#faf7f0_0%,#f6f0e6_100%)] text-on-surface">
 			<div class="section-shell-wide flex min-h-screen flex-col gap-6 py-6 lg:flex-row">
-				<aside class="load-rise hidden lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-3rem)] lg:w-80 lg:flex-col lg:justify-between rounded-[2.75rem] border border-white/70 bg-[#17150f] p-6 text-white shadow-lift">
+				<aside class="load-rise hidden lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-3rem)] lg:w-80 lg:flex-col lg:justify-between rounded-[2.75rem] border border-white/15 bg-[#121611] p-6 text-white shadow-lift">
 					<div>
 						<div class="flex items-center gap-4">
 							<button
@@ -213,7 +213,7 @@ export function AdminDashboard() {
 							<div class="flex flex-wrap items-center gap-3">
 								<div class="flex items-center gap-3 rounded-full border border-primary/10 bg-white px-3 py-2 shadow-soft">
 									<img
-										src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00`}
+										src={`https://ui-avatars.com/api/?name=${profil.nom}&background=c19a2e&color=1d1700`}
 										alt={profil.nom}
 										class="h-11 w-11 rounded-full"
 									/>
@@ -272,14 +272,14 @@ export function AdminDashboard() {
 				</main>
 			</div>
 
-			<nav class="load-rise lg:hidden fixed bottom-4 inset-x-4 z-50 flex h-20 items-center justify-around rounded-full border border-white/70 bg-[#17150f] px-4 shadow-lift backdrop-blur-2xl">
+			<nav class="load-rise lg:hidden fixed bottom-4 inset-x-4 z-50 flex h-20 items-center justify-around rounded-full border border-white/15 bg-[#121611] px-4 shadow-lift backdrop-blur-2xl">
 				{navItems.filter((item) => item.tab !== 'reviews').map((item) => (
 					<MobileNavLink key={item.tab} active={currentTab === item.tab} icon={item.tab === 'stats' ? 'grid_view' : item.icon} onClick={() => navigate(item.tab)} />
 				))}
 				<button
 					type="button"
 					onClick={() => route('/')}
-					class="flex h-14 w-14 -translate-y-6 items-center justify-center rounded-full border-4 border-[#fdfaf1] bg-primary text-on-primary shadow-lift"
+					class="flex h-14 w-14 -translate-y-6 items-center justify-center rounded-full border-4 border-[#faf7f0] bg-primary text-on-primary shadow-lift"
 				>
 					<span class="material-symbols-outlined text-[20px]">home</span>
 				</button>
@@ -1350,6 +1350,7 @@ function SiteSettingsManager({ data, setData }) {
 			const siteInfo = createSiteInfoForm(response?.siteInfo || response);
 
 			setData(siteInfo);
+			broadcastSiteInfoUpdate(siteInfo);
 			setMessage({ type: 'success', text: 'Informations du site mises à jour.' });
 		} catch (error) {
 			console.error('Erreur paramètres site:', error);
@@ -1514,7 +1515,7 @@ function ProfileManager({ profil, setProfil }) {
 		<Reveal class="surface-card-strong p-8 lg:p-10" delay={100}>
 			<div class="flex flex-col gap-10 lg:flex-row lg:items-start">
 				<img
-					src={`https://ui-avatars.com/api/?name=${profil.nom}&background=d0af2f&color=231b00&size=300`}
+					src={`https://ui-avatars.com/api/?name=${profil.nom}&background=c19a2e&color=1d1700&size=300`}
 					alt={profil.nom}
 					class="h-36 w-36 rounded-[2rem] shadow-lift"
 				/>

@@ -45,7 +45,7 @@ export function Login() {
 	};
 
 	return (
-		<div class="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(208,175,47,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(0,109,54,0.08),transparent_28%),linear-gradient(180deg,#f8f3e7_0%,#fdfaf1_100%)] text-on-surface">
+		<div class="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(193,154,46,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(20,86,63,0.10),transparent_28%),linear-gradient(180deg,#faf7f0_0%,#f6f0e6_100%)] text-on-surface">
 			<div class="orb-drift absolute left-[-4rem] top-20 h-72 w-72 rounded-full bg-primary/15 blur-3xl"></div>
 			<div class="orb-drift absolute right-[-4rem] bottom-16 h-80 w-80 rounded-full bg-tertiary/12 blur-3xl"></div>
 
