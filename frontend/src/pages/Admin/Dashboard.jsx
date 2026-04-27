@@ -2,9 +2,11 @@ import { useEffect, useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { api, clearAuthToken, getAuthToken, resolveBackendAssetUrl } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
+import { createSiteInfoForm } from '../../lib/siteSettings.js';
 
 const navItems = [
 	{ tab: 'stats', icon: 'dashboard', label: 'Vue globale' },
+	{ tab: 'site', icon: 'public', label: 'Infos site' },
 	{ tab: 'news', icon: 'auto_awesome', label: 'Actualités' },
 	{ tab: 'events', icon: 'event', label: 'Événements' },
 	{ tab: 'reviews', icon: 'forum', label: 'Avis clients' },
@@ -14,6 +16,7 @@ const navItems = [
 
 const tabTitles = {
 	stats: 'Tableau de bord',
+	site: 'Informations du site',
 	news: 'Actualités',
 	events: 'Événements',
 	reviews: 'Avis clients',
@@ -27,6 +30,7 @@ export function AdminDashboard() {
 	const [donnees, setDonnees] = useState([]);
 	const [profil, setProfil] = useState(null);
 	const [statistiques, setStatistiques] = useState(null);
+	const [siteSettings, setSiteSettings] = useState(createSiteInfoForm());
 	const [chargement, setChargement] = useState(true);
 	const [rafraichissement, setRafraichissement] = useState(0);
 
@@ -64,6 +68,12 @@ export function AdminDashboard() {
 					const dataStats = await api.admin.stats();
 					if (alive) {
 						setStatistiques(dataStats);
+						setDonnees([]);
+					}
+				} else if (currentTab === 'site') {
+					const dataSite = await api.admin.siteInfo.lire();
+					if (alive) {
+						setSiteSettings(createSiteInfoForm(dataSite));
 						setDonnees([]);
 					}
 				} else if (currentTab === 'news') {
@@ -232,7 +242,19 @@ export function AdminDashboard() {
 						) : (
 							<>
 								{currentTab === 'stats' && <StatsOverview stats={statistiques} />}
-								{currentTab === 'news' && <NewsManager data={donnees} onSupprimer={supprimerElement} />}
+								{currentTab === 'site' && (
+									<SiteSettingsManager
+										data={siteSettings}
+										setData={setSiteSettings}
+									/>
+								)}
+								{currentTab === 'news' && (
+									<NewsManager
+										data={donnees}
+										onSupprimer={supprimerElement}
+										onRefresh={rafraichir}
+									/>
+								)}
 								{currentTab === 'events' && <EventsManager data={donnees} onRefresh={rafraichir} />}
 								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
 								{currentTab === 'accounts' && (
@@ -319,41 +341,329 @@ function StatCard({ label, value, icon, hint, delay = 0 }) {
 	);
 }
 
-function NewsManager({ data, onSupprimer }) {
+const actualiteFormInitial = {
+	titre: '',
+	contenu: '',
+	image_url: '',
+	date_publication: '',
+	statut: 'brouillon',
+};
+
+function NewsManager({ data, onRefresh }) {
+	const { route } = useLocation();
+	const [form, setForm] = useState(actualiteFormInitial);
+	const [imageFile, setImageFile] = useState(null);
+	const [imagePreview, setImagePreview] = useState('');
+	const [imageInputKey, setImageInputKey] = useState(0);
+	const [editionId, setEditionId] = useState(null);
+	const [saving, setSaving] = useState(false);
+	const [message, setMessage] = useState(null);
+
+	useEffect(() => {
+		if (!imageFile) {
+			setImagePreview('');
+			return undefined;
+		}
+
+		const objectUrl = URL.createObjectURL(imageFile);
+		setImagePreview(objectUrl);
+
+		return () => URL.revokeObjectURL(objectUrl);
+	}, [imageFile]);
+
+	const resetForm = () => {
+		setForm(actualiteFormInitial);
+		setImageFile(null);
+		setImageInputKey((value) => value + 1);
+		setEditionId(null);
+		setMessage(null);
+	};
+
+	const lancerEdition = (actu) => {
+		setEditionId(actu.id);
+		setForm({
+			titre: actu.titre || '',
+			contenu: actu.contenu || '',
+			image_url: actu.image_url || '',
+			date_publication: actu.date_publication || '',
+			statut: actu.statut || 'brouillon',
+		});
+		setImageFile(null);
+		setImageInputKey((value) => value + 1);
+		setMessage(null);
+	};
+
+	const lireErreur = (error, fallback) => {
+		if (error?.data && typeof error.data === 'object' && (error.data.error || error.data.message)) {
+			return error.data.error || error.data.message;
+		}
+
+		return error?.message || fallback;
+	};
+
+	const enregistrer = async (e) => {
+		e.preventDefault();
+		const titre = form.titre.trim();
+
+		if (!titre) {
+			setMessage({ type: 'error', text: 'Le titre est obligatoire.' });
+			return;
+		}
+
+		setSaving(true);
+		setMessage(null);
+
+		try {
+			const payload = new FormData();
+			payload.append('titre', titre);
+			payload.append('contenu', form.contenu.trim());
+			payload.append('date_publication', form.date_publication.trim());
+			payload.append('statut', form.statut.trim() || 'brouillon');
+
+			if (imageFile) {
+				payload.append('image', imageFile);
+			}
+
+			if (editionId) {
+				await api.admin.actualites.mettreAJour(editionId, payload);
+				resetForm();
+				setMessage({ type: 'success', text: 'Actualité mise à jour.' });
+			} else {
+				await api.admin.actualites.creer(payload);
+				resetForm();
+				setMessage({ type: 'success', text: 'Actualité créée.' });
+			}
+
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur actualité:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
+			setMessage({
+				type: 'error',
+				text: lireErreur(error, editionId ? "La mise à jour a échoué." : "La création a échoué."),
+			});
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const supprimer = async (actu) => {
+		if (!confirm(`Supprimer l'actualité "${actu.titre}" ?`)) {
+			return;
+		}
+
+		try {
+			await api.admin.actualites.supprimer(actu.id);
+			if (editionId === actu.id) {
+				resetForm();
+			}
+			setMessage({ type: 'success', text: 'Actualité supprimée.' });
+			onRefresh();
+		} catch (error) {
+			console.error('Erreur suppression actualité:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
+			setMessage({ type: 'error', text: lireErreur(error, 'La suppression a échoué.') });
+		}
+	};
+
 	return (
-		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-			{data.map((actu, index) => (
-				<Reveal key={actu.id} as="article" class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={index * 120}>
-					<img
-						src={resolveBackendAssetUrl(actu.image_url) || 'https://picsum.photos/seed/1/800/600'}
-						alt={actu.titre}
-						class="h-64 w-full object-cover"
-						loading="lazy"
-					/>
-					<div class="p-6">
-						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">{actu.date_publication}</div>
-						<h4 class="mt-4 font-serif text-2xl italic text-on-surface">{actu.titre}</h4>
-						<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70">{actu.contenu}</p>
-						<div class="mt-6 flex items-center justify-between gap-4">
-							<button
-								type="button"
-								onClick={() => onSupprimer(actu.id)}
-								class="text-[10px] font-black uppercase tracking-[0.3em] text-rose-600 transition-colors hover:text-rose-700"
+		<div class="space-y-8">
+			<Reveal class="surface-card-strong p-8 lg:p-10" delay={80}>
+				<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+					<div>
+						<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+							{editionId ? 'Modifier une actualité' : 'Créer une actualité'}
+						</div>
+						<h3 class="mt-4 font-serif text-4xl italic text-on-surface">
+							{editionId ? 'Mise à jour du contenu' : 'Publier une nouvelle note'}
+						</h3>
+						<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">
+							Le formulaire ci-dessous alimente le site public et le tableau de bord. Le bouton de création est désormais actif.
+						</p>
+					</div>
+
+					<button
+						type="button"
+						onClick={resetForm}
+						class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+					>
+						Nouvelle actualité
+					</button>
+				</div>
+
+				{message && (
+					<div
+						class={`mt-6 rounded-[1.5rem] px-4 py-3 text-sm ${
+							message.type === 'success' ? 'bg-tertiary/10 text-tertiary' : 'bg-rose-50 text-rose-700'
+						}`}
+					>
+						{message.text}
+					</div>
+				)}
+
+				<form class="mt-8 space-y-6" onSubmit={enregistrer}>
+					<div class="grid gap-6 md:grid-cols-2">
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">Titre</label>
+							<input
+								type="text"
+								required
+								value={form.titre}
+								onInput={(e) => setForm({ ...form, titre: e.target.value })}
+								class="field-input"
+								placeholder="Titre de l'actualité"
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Date de publication</label>
+							<input
+								type="date"
+								value={form.date_publication}
+								onInput={(e) => setForm({ ...form, date_publication: e.target.value })}
+								class="field-input"
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label class="field-label">Statut</label>
+							<select
+								value={form.statut}
+								onChange={(e) => setForm({ ...form, statut: e.currentTarget.value })}
+								class="field-input"
 							>
-								Supprimer
-							</button>
-							<span class="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-								Publier
-							</span>
+								<option value="brouillon">Brouillon</option>
+								<option value="publie">Publié</option>
+								<option value="archive">Archivé</option>
+							</select>
+						</div>
+
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">Contenu</label>
+							<textarea
+								rows="5"
+								value={form.contenu}
+								onInput={(e) => setForm({ ...form, contenu: e.target.value })}
+								class="field-textarea"
+								placeholder="Rédigez le contenu de l'actualité..."
+							/>
+						</div>
+
+						<div class="space-y-3 md:col-span-2">
+							<label class="field-label">Image</label>
+							<input
+								key={imageInputKey}
+								type="file"
+								accept="image/*"
+								onChange={(e) => setImageFile(e.currentTarget.files?.[0] || null)}
+								class="field-input cursor-pointer py-3"
+							/>
+							<p class="text-[10px] font-black uppercase tracking-[0.28em] text-outline">
+								Image stockée sur notre serveur
+							</p>
+							{(imagePreview || resolveBackendAssetUrl(form.image_url)) && (
+								<div class="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-white shadow-soft">
+									<img
+										src={imagePreview || resolveBackendAssetUrl(form.image_url)}
+										alt={form.titre || "Aperçu de l'actualité"}
+										class="h-44 w-full object-cover"
+									/>
+								</div>
+							)}
+							{imageFile ? (
+								<div class="text-xs font-semibold text-on-surface/65">
+									Fichier sélectionné : {imageFile.name}
+								</div>
+							) : form.image_url ? (
+								<div class="text-xs font-semibold text-on-surface/65">
+									L'image actuelle sera conservée si tu n'en ajoutes pas une nouvelle.
+								</div>
+							) : null}
 						</div>
 					</div>
-				</Reveal>
-			))}
 
-			<Reveal class="surface-card flex min-h-[26rem] flex-col items-center justify-center border-2 border-dashed border-primary/20 bg-white/55 p-8 text-primary transition-colors duration-300 hover:border-primary/50 hover:bg-white/70" delay={data.length * 120}>
-				<span class="material-symbols-outlined text-4xl">add</span>
-				<span class="mt-4 text-[10px] font-black uppercase tracking-[0.32em]">Nouvelle actualité</span>
+					<div class="flex flex-col gap-3 sm:flex-row">
+						<button
+							type="submit"
+							disabled={saving}
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+						>
+							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : "Créer l'actualité"}
+						</button>
+						{editionId && (
+							<button
+								type="button"
+								onClick={resetForm}
+								class="inline-flex items-center justify-center rounded-full border border-primary/10 bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:border-primary/30 hover:text-on-surface"
+							>
+								Annuler l'édition
+							</button>
+						)}
+					</div>
+				</form>
 			</Reveal>
+
+			<div class="space-y-4">
+				{data.length === 0 ? (
+					<div class="surface-card p-6 text-sm leading-7 text-on-surface/70">
+						Aucune actualité pour le moment. Créez-en une avec le formulaire ci-dessus.
+					</div>
+				) : (
+					data.map((actu, index) => (
+						<Reveal
+							key={actu.id}
+							as="article"
+							class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1"
+							delay={index * 120}
+						>
+							<img
+								src={resolveBackendAssetUrl(actu.image_url) || 'https://picsum.photos/seed/1/800/600'}
+								alt={actu.titre}
+								class="h-64 w-full object-cover"
+								loading="lazy"
+							/>
+							<div class="p-6">
+								<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
+									{actu.date_publication || 'Date non définie'}
+								</div>
+								<h4 class="mt-4 font-serif text-2xl italic text-on-surface">{actu.titre}</h4>
+								<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70">{actu.contenu}</p>
+								<div class="mt-6 flex flex-wrap items-center justify-between gap-4">
+									<div class="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+										{actu.statut || 'brouillon'}
+									</div>
+									<div class="flex flex-wrap gap-3">
+										<button
+											type="button"
+											onClick={() => lancerEdition(actu)}
+											class="text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:text-on-surface"
+										>
+											Modifier
+										</button>
+										<button
+											type="button"
+											onClick={() => supprimer(actu)}
+											class="text-[10px] font-black uppercase tracking-[0.3em] text-rose-600 transition-colors hover:text-rose-700"
+										>
+											Supprimer
+										</button>
+									</div>
+								</div>
+							</div>
+						</Reveal>
+					))
+				)}
+			</div>
 		</div>
 	);
 }
@@ -1013,6 +1323,172 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 				)}
 			</div>
 		</div>
+	);
+}
+
+function SiteSettingsManager({ data, setData }) {
+	const { route } = useLocation();
+	const [saving, setSaving] = useState(false);
+	const [message, setMessage] = useState(null);
+
+	const lireErreur = (error, fallback) => {
+		if (error?.data && typeof error.data === 'object' && (error.data.error || error.data.message)) {
+			return error.data.error || error.data.message;
+		}
+
+		return error?.message || fallback;
+	};
+
+	const enregistrer = async (e) => {
+		e.preventDefault();
+		setSaving(true);
+		setMessage(null);
+
+		try {
+			const payload = createSiteInfoForm(data);
+			const response = await api.admin.siteInfo.mettreAJour(payload);
+			const siteInfo = createSiteInfoForm(response?.siteInfo || response);
+
+			setData(siteInfo);
+			setMessage({ type: 'success', text: 'Informations du site mises à jour.' });
+		} catch (error) {
+			console.error('Erreur paramètres site:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
+
+			setMessage({ type: 'error', text: lireErreur(error, 'La mise à jour a échoué.') });
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	return (
+		<Reveal class="surface-card-strong p-8 lg:p-10" delay={100}>
+			<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+				<div>
+					<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">Paramètres publics</div>
+					<h3 class="mt-4 font-serif text-4xl italic text-on-surface">Coordonnées et crédit du site</h3>
+					<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">
+						Ces champs alimentent le footer, l'adresse affichée et les liens de contact du site public.
+					</p>
+				</div>
+			</div>
+
+			{message && (
+				<div
+					class={`mt-6 rounded-[1.5rem] px-4 py-3 text-sm ${
+						message.type === 'success' ? 'bg-tertiary/10 text-tertiary' : 'bg-rose-50 text-rose-700'
+					}`}
+				>
+					{message.text}
+				</div>
+			)}
+
+			<form class="mt-8 space-y-6" onSubmit={enregistrer}>
+				<div class="grid gap-6 md:grid-cols-2">
+					<div class="space-y-3 md:col-span-2">
+						<label class="field-label">Adresse</label>
+						<textarea
+							rows="4"
+							value={data.address}
+							onInput={(e) => setData({ ...data, address: e.target.value })}
+							class="field-textarea"
+							placeholder={'Lanirano\nFort-Dauphin\nMadagascar'}
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Téléphone</label>
+						<input
+							type="text"
+							value={data.contact_phone}
+							onInput={(e) => setData({ ...data, contact_phone: e.target.value })}
+							class="field-input"
+							placeholder="0340721499"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">WhatsApp</label>
+						<input
+							type="text"
+							value={data.contact_whatsapp}
+							onInput={(e) => setData({ ...data, contact_whatsapp: e.target.value })}
+							class="field-input"
+							placeholder="0340721499"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Email de contact</label>
+						<input
+							type="email"
+							value={data.contact_email}
+							onInput={(e) => setData({ ...data, contact_email: e.target.value })}
+							class="field-input"
+							placeholder="contact@nylapako.fr"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Horaires</label>
+						<input
+							type="text"
+							value={data.opening_hours}
+							onInput={(e) => setData({ ...data, opening_hours: e.target.value })}
+							class="field-input"
+							placeholder="Accueil 7j/7"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Check-in</label>
+						<input
+							type="text"
+							value={data.check_in}
+							onInput={(e) => setData({ ...data, check_in: e.target.value })}
+							class="field-input"
+							placeholder="Check-in dès 15h"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Copyright</label>
+						<input
+							type="text"
+							value={data.copyright_owner}
+							onInput={(e) => setData({ ...data, copyright_owner: e.target.value })}
+							class="field-input"
+							placeholder="Demondra"
+						/>
+					</div>
+
+					<div class="space-y-3">
+						<label class="field-label">Lien du copyright</label>
+						<input
+							type="url"
+							value={data.copyright_url}
+							onInput={(e) => setData({ ...data, copyright_url: e.target.value })}
+							class="field-input"
+							placeholder="https://github.com/hajaraph"
+						/>
+					</div>
+				</div>
+
+				<div class="flex flex-col gap-3 sm:flex-row">
+					<button
+						type="submit"
+						disabled={saving}
+						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+					>
+						{saving ? 'Enregistrement...' : 'Mettre à jour'}
+					</button>
+				</div>
+			</form>
+		</Reveal>
 	);
 }
 

@@ -11,6 +11,7 @@ import routeAdmin from './src/routes/admin';
 import routeActualites from './src/routes/actualites';
 import routeEvenements from './src/routes/evenements';
 import routeAvis from './src/routes/avis';
+import routeSiteInfo from './src/routes/siteInfo';
 
 const app = new Hono();
 
@@ -59,6 +60,7 @@ app.route('/admin', routeAdmin);
 app.route('/actualites', routeActualites);
 app.route('/evenements', routeEvenements);
 app.route('/avis', routeAvis);
+app.route('/site-info', routeSiteInfo);
 
 // Route de base pour vérifier que tout fonctionne
 app.get('/', (c) => c.text('Bienvenue sur l\'API de Ny Lapako (Opérationnelle 🚀)'));

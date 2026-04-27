@@ -6,6 +6,52 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-27 - CRUD actualités corrigé
+- Frontend admin actualités rendu interactif :
+  - ajout d'un vrai formulaire de création,
+  - bouton `Nouvelle actualité` cliquable,
+  - édition et suppression disponibles sur chaque carte.
+- Backend admin actualités complété :
+  - ajout de `PATCH /admin/actualites/:id`,
+  - validation du titre à la création et à la mise à jour.
+- Image d'actualité passée en upload fichier :
+  - champ URL remplacé par un vrai sélecteur de fichier,
+  - aperçu local avant envoi,
+  - conservation de l'image existante en édition si aucune nouvelle image n'est fournie.
+- Fichiers modifiés :
+  - `backend/src/routes/admin.ts`
+  - `backend/src/routes/actualites.ts`
+  - `backend/src/lib/actualiteMedia.ts`
+  - `frontend/src/api.js`
+  - `frontend/src/pages/Admin/Dashboard.jsx`
+
+### 2026-04-27 - Informations publiques du site rendues dynamiques
+- Ajout d'un stockage dédié pour les informations publiques du site :
+  - adresse,
+  - téléphone,
+  - WhatsApp,
+  - email de contact,
+  - horaires,
+  - crédit de copyright.
+- Ajout d'une route publique `GET /site-info` et d'une route admin `GET/PATCH /admin/site-info`.
+- Frontend branché sur ces données :
+  - footer dynamique,
+  - adresse dynamique sur la page d'accueil,
+  - lien `Demondra` cliquable vers `https://github.com/hajaraph`.
+- Fichiers modifiés :
+  - `backend/src/lib/siteSettings.ts`
+  - `backend/src/routes/siteInfo.ts`
+  - `backend/src/routes/admin.ts`
+  - `backend/src/bdd.ts`
+  - `backend/src/db/schema.ts`
+  - `backend/index.ts`
+  - `frontend/src/lib/siteSettings.js`
+  - `frontend/src/api.js`
+  - `frontend/src/index.jsx`
+  - `frontend/src/pages/Home/index.jsx`
+  - `frontend/src/components/Footer.jsx`
+  - `frontend/index.html`
+
 ### 2026-04-27 - Déploiement frontend via Nginx (Docker)
 - Frontend Docker migré vers Nginx :
   - build statique Vite dans une étape dédiée,

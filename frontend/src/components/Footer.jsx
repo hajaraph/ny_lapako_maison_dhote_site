@@ -1,6 +1,13 @@
 import { Reveal } from './Reveal.jsx';
+import {
+	DEFAULT_SITE_INFO,
+	formatTelHref,
+	formatWhatsappHref,
+	normalizeSiteInfo,
+} from '../lib/siteSettings.js';
 
-export function Footer() {
+export function Footer({ siteInfo }) {
+	const site = normalizeSiteInfo(siteInfo || DEFAULT_SITE_INFO);
 	const highlights = [
 		{ label: 'Suites', value: '6 espaces lumineux' },
 		{ label: 'Jardin', value: '4 hectares apaisés' },
@@ -10,15 +17,22 @@ export function Footer() {
 	const contactCards = [
 		{
 			title: 'Adresse',
-			lines: ['Lanirano', 'Fort-Dauphin', 'Madagascar'],
+			items: site.address_lines.map((line) => ({ text: line })),
 		},
 		{
 			title: 'Nous contacter',
-			lines: ['Contact : 0340721499', 'WhatsApp : 0340721499'],
+			items: [
+				{ label: 'Téléphone', value: site.contact_phone, href: formatTelHref(site.contact_phone) },
+				{ label: 'WhatsApp', value: site.contact_whatsapp, href: formatWhatsappHref(site.contact_whatsapp) },
+				{ label: 'Mail', value: site.contact_email, href: `mailto:${site.contact_email}` },
+			],
 		},
 		{
 			title: 'Horaires',
-			lines: ['Accueil 7j/7', 'Check-in dès 15h'],
+			items: [
+				{ text: site.opening_hours },
+				{ text: site.check_in },
+			],
 		},
 	];
 
@@ -59,13 +73,17 @@ export function Footer() {
 							</div>
 
 							<div class="flex flex-wrap gap-4 text-white/45">
-								<a href="tel:0340721499" class="inline-flex items-center gap-2 transition-colors hover:text-white">
+								<a href={formatTelHref(site.contact_phone)} class="inline-flex items-center gap-2 transition-colors hover:text-white">
 									<span class="material-symbols-outlined text-sm">call</span>
 									<span class="text-[10px] font-black uppercase tracking-[0.3em]">Contact</span>
 								</a>
-								<a href="https://wa.me/261340721499" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 transition-colors hover:text-white">
+								<a href={formatWhatsappHref(site.contact_whatsapp)} target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 transition-colors hover:text-white">
 									<span class="material-symbols-outlined text-sm">chat</span>
 									<span class="text-[10px] font-black uppercase tracking-[0.3em]">WhatsApp</span>
+								</a>
+								<a href={`mailto:${site.contact_email}`} class="inline-flex items-center gap-2 transition-colors hover:text-white">
+									<span class="material-symbols-outlined text-sm">mail</span>
+									<span class="text-[10px] font-black uppercase tracking-[0.3em]">Mail</span>
 								</a>
 							</div>
 						</div>
@@ -73,7 +91,7 @@ export function Footer() {
 
 					<div class="grid gap-6 sm:grid-cols-2">
 						{contactCards.map((card) => (
-							<FooterInfoCard key={card.title} title={card.title} lines={card.lines} />
+							<FooterInfoCard key={card.title} title={card.title} items={card.items} />
 						))}
 
 						<div class="surface-card-strong border-white/10 bg-white/5 p-6 sm:col-span-2">
@@ -100,7 +118,15 @@ export function Footer() {
 
 				<Reveal class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between" delay={220}>
 					<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">
-						© 2026 Ny Lapako Luxury Guest House.
+						© 2026 Copyright{' '}
+						<a
+							href={site.copyright_url}
+							target="_blank"
+							rel="noreferrer"
+							class="transition-colors hover:text-white"
+						>
+							Demondra
+						</a>
 					</div>
 					<div class="flex flex-wrap gap-6 text-[10px] font-black uppercase tracking-[0.3em] text-white/35">
 						<a class="transition-colors hover:text-white" href="#">
@@ -116,14 +142,34 @@ export function Footer() {
 	);
 }
 
-function FooterInfoCard({ title, lines }) {
+function FooterInfoCard({ title, items }) {
 	return (
 		<div class="surface-card-strong border-white/10 bg-white/5 p-6 text-white">
 			<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/45">{title}</div>
 			<div class="mt-4 space-y-2 text-sm leading-7 text-white/72">
-				{lines.map((line) => (
-					<div key={line}>{line}</div>
-				))}
+				{items.map((item) => {
+					if (typeof item === 'string') {
+						return <div key={item}>{item}</div>;
+					}
+
+					if (item.href) {
+						return (
+							<a
+								key={`${item.label}-${item.value}`}
+								href={item.href}
+								target={item.href.startsWith('mailto:') || item.href.startsWith('tel:') ? undefined : '_blank'}
+								rel={item.href.startsWith('mailto:') || item.href.startsWith('tel:') ? undefined : 'noreferrer'}
+								class="block transition-colors hover:text-white"
+							>
+								<span class="text-white/45">{item.label}</span>
+								{' '}
+								{item.value}
+							</a>
+						);
+					}
+
+					return <div key={item.text}>{item.text}</div>;
+				})}
 			</div>
 		</div>
 	);

@@ -33,3 +33,15 @@ export const avisClients = sqliteTable("avis_clients", {
     date_sejour: text("date_sejour"),
     statut: text("statut").default("en_attente"),
 });
+
+export const siteSettings = sqliteTable("site_settings", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    address: text("address").notNull(),
+    contact_phone: text("contact_phone").notNull(),
+    contact_whatsapp: text("contact_whatsapp").notNull(),
+    contact_email: text("contact_email").notNull(),
+    opening_hours: text("opening_hours").notNull(),
+    check_in: text("check_in").notNull(),
+    copyright_owner: text("copyright_owner").notNull(),
+    copyright_url: text("copyright_url").notNull(),
+});

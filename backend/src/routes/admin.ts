@@ -1,9 +1,17 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
-import { actualites, administrateurs, avisClients, evenements } from '../db/schema';
+import { actualites, administrateurs, avisClients, evenements, siteSettings } from '../db/schema';
 import { asc, desc, eq } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
+import { lireActualiteDepuisRequete, supprimerImageActualiteLocale } from '../lib/actualiteMedia';
 import { lireEvenementDepuisRequete, supprimerImageLocale } from '../lib/evenementMedia';
+import {
+	estEmailValide,
+	estUrlValide,
+	formaterSiteSettingsResponse,
+	fusionnerSiteSettings,
+	normaliserSiteSettingsPayload,
+} from '../lib/siteSettings';
 
 const routeAdmin = new Hono();
 
@@ -72,6 +80,50 @@ routeAdmin.get('/profil', async (c) => {
     }).from(administrateurs).where(eq(administrateurs.id, adminId)).limit(1).get();
     
     return c.json(profil);
+});
+
+routeAdmin.get('/site-info', async (c) => {
+    const siteInfo = await db.select().from(siteSettings).limit(1).get();
+
+    return c.json(formaterSiteSettingsResponse(siteInfo ?? null));
+});
+
+routeAdmin.patch('/site-info', async (c) => {
+    const corps = await c.req.json();
+    const payload = normaliserSiteSettingsPayload(corps);
+
+    if (!payload) {
+        return c.json({ error: 'Au moins une information valide est requise' }, 400);
+    }
+
+    const siteInfoActuel = await db.select().from(siteSettings).limit(1).get();
+    const siteInfoFusionne = fusionnerSiteSettings(siteInfoActuel ?? null, payload);
+
+    if (!siteInfoFusionne.address || !siteInfoFusionne.contact_phone || !siteInfoFusionne.contact_whatsapp || !siteInfoFusionne.contact_email) {
+        return c.json({ error: 'Adresse, téléphone, WhatsApp et email sont requis' }, 400);
+    }
+
+    if (!estEmailValide(siteInfoFusionne.contact_email)) {
+        return c.json({ error: 'Adresse email de contact invalide' }, 400);
+    }
+
+    if (!estUrlValide(siteInfoFusionne.copyright_url)) {
+        return c.json({ error: 'Lien de copyright invalide' }, 400);
+    }
+
+    if (siteInfoActuel) {
+        await db.update(siteSettings)
+            .set(siteInfoFusionne)
+            .where(eq(siteSettings.id, siteInfoActuel.id))
+            .run();
+    } else {
+        await db.insert(siteSettings).values(siteInfoFusionne).run();
+    }
+
+    return c.json({
+        message: 'Informations du site mises à jour',
+        siteInfo: formaterSiteSettingsResponse(siteInfoFusionne),
+    });
 });
 
 // Mettre à jour le profil admin
@@ -253,15 +305,55 @@ routeAdmin.get('/actualites', async (c) => {
 });
 
 routeAdmin.post('/actualites', async (c) => {
-    const corps = await c.req.json();
+    const { actualite } = await lireActualiteDepuisRequete(c);
+
+    if (!actualite.titre) {
+        return c.json({ error: 'Le titre est requis' }, 400);
+    }
+
     await db.insert(actualites).values({
-        titre: corps.titre,
-        contenu: corps.contenu,
-        image_url: corps.image_url,
-        date_publication: corps.date_publication,
-        statut: corps.statut
+        titre: actualite.titre,
+        contenu: actualite.contenu,
+        image_url: actualite.image_url,
+        date_publication: actualite.date_publication,
+        statut: actualite.statut
     }).run();
     return c.json({ message: "Actualité créée" }, 201);
+});
+
+routeAdmin.patch('/actualites/:id', async (c) => {
+    const id = Number(c.req.param('id'));
+
+    if (!Number.isFinite(id)) {
+        return c.json({ error: 'Identifiant invalide' }, 400);
+    }
+
+    const actualiteExistant = await db.select({ image_url: actualites.image_url })
+        .from(actualites)
+        .where(eq(actualites.id, id))
+        .limit(1)
+        .get();
+
+    if (!actualiteExistant) {
+        return c.json({ error: 'Actualité introuvable' }, 404);
+    }
+
+    const { actualite, imageRemplacee } = await lireActualiteDepuisRequete(c, actualiteExistant.image_url ?? '');
+
+    if (!actualite.titre) {
+        return c.json({ error: 'Le titre est requis' }, 400);
+    }
+
+    await db.update(actualites)
+        .set(actualite)
+        .where(eq(actualites.id, id))
+        .run();
+
+    if (imageRemplacee) {
+        await supprimerImageActualiteLocale(imageRemplacee);
+    }
+
+    return c.json({ message: 'Actualité mise à jour' });
 });
 
 routeAdmin.delete('/actualites/:id', async (c) => {
@@ -271,7 +363,14 @@ routeAdmin.delete('/actualites/:id', async (c) => {
         return c.json({ error: 'Identifiant invalide' }, 400);
     }
 
+    const actualiteExistant = await db.select({ image_url: actualites.image_url })
+        .from(actualites)
+        .where(eq(actualites.id, id))
+        .limit(1)
+        .get();
+
     await db.delete(actualites).where(eq(actualites.id, id)).run();
+    await supprimerImageActualiteLocale(actualiteExistant?.image_url ?? '');
     return c.json({ message: "Actualité supprimée" });
 });
 

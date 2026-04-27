@@ -111,6 +111,9 @@ async function requete(endpoint, methode = 'GET', donnees = null, options = {}) 
 }
 
 export const api = {
+	siteInfo: {
+		lire: () => requete('/site-info'),
+	},
 	auth: {
 		login: (data) => requete('/auth/login', 'POST', data),
 	},
@@ -132,17 +135,22 @@ export const api = {
 		getProfil: () => requete('/admin/profil', 'GET', null, { auth: true }),
 		updateProfil: (data) => requete('/admin/profil', 'PATCH', data, { auth: true }),
 		stats: () => requete('/admin/stats', 'GET', null, { auth: true }),
+		siteInfo: {
+			lire: () => requete('/admin/site-info', 'GET', null, { auth: true }),
+			mettreAJour: (data) => requete('/admin/site-info', 'PATCH', data, { auth: true }),
+		},
 		comptes: {
 			lister: () => requete('/admin/comptes', 'GET', null, { auth: true }),
 			creer: (data) => requete('/admin/comptes', 'POST', data, { auth: true }),
 			mettreAJour: (id, data) => requete(`/admin/comptes/${id}`, 'PATCH', data, { auth: true }),
 			supprimer: (id) => requete(`/admin/comptes/${id}`, 'DELETE', null, { auth: true }),
 		},
-		actualites: {
-			lister: () => requete('/admin/actualites', 'GET', null, { auth: true }),
-			creer: (data) => requete('/admin/actualites', 'POST', data, { auth: true }),
-			supprimer: (id) => requete(`/admin/actualites/${id}`, 'DELETE', null, { auth: true }),
-		},
+	actualites: {
+		lister: () => requete('/admin/actualites', 'GET', null, { auth: true }),
+		creer: (data) => requete('/admin/actualites', 'POST', data, { auth: true }),
+		mettreAJour: (id, data) => requete(`/admin/actualites/${id}`, 'PATCH', data, { auth: true }),
+		supprimer: (id) => requete(`/admin/actualites/${id}`, 'DELETE', null, { auth: true }),
+	},
 		evenements: {
 			lister: () => requete('/admin/evenements', 'GET', null, { auth: true }),
 			creer: (data) => requete('/admin/evenements', 'POST', data, { auth: true }),

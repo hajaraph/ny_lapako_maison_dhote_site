@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, resolveBackendAssetUrl } from '../../api';
 import { Reveal } from '../../components/Reveal.jsx';
+import { normalizeSiteInfo } from '../../lib/siteSettings.js';
 import debutImage from '../../assets/images_archi.jpeg';
 import heroImage from '../../assets/debut.png';
 import gardenImage from '../../assets/debut_images.jpeg';
@@ -50,7 +51,9 @@ const moments = [
 
 const heroPills = ['Petit-déjeuner local', 'Jardin privé', 'Suites lumineuses'];
 
-export function Home() {
+export function Home({ siteInfo }) {
+	const site = normalizeSiteInfo(siteInfo);
+	const locationSummary = site.address_lines.slice(0, 2).join(', ');
 	const [actualites, setActualites] = useState([]);
 	const [evenements, setEvenements] = useState([]);
 	const [avis, setAvis] = useState([]);
@@ -141,7 +144,7 @@ export function Home() {
 							</span>
 						</h1>
 						<p class="mt-6 max-w-2xl text-lg leading-8 text-white/78 sm:text-xl">
-							Un refuge contemporain à Lanirano, Fort-Dauphin, où le jardin, les suites et le petit-déjeuner s'accordent dans une ambiance plus douce.
+							Un refuge contemporain à {locationSummary || 'Lanirano, Fort-Dauphin'}, où le jardin, les suites et le petit-déjeuner s'accordent dans une ambiance plus douce.
 						</p>
 
 						<div class="mt-10 flex flex-wrap gap-4">
@@ -173,7 +176,11 @@ export function Home() {
 							<div class="mt-4 grid gap-3 sm:grid-cols-2">
 								<div class="rounded-[1.5rem] bg-surface-container-lowest p-4">
 									<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Adresse</div>
-									<div class="mt-2 text-sm font-semibold text-on-surface">Lanirano, Fort-Dauphin</div>
+									<div class="mt-2 space-y-1 text-sm font-semibold leading-6 text-on-surface">
+										{site.address_lines.map((line) => (
+											<div key={line}>{line}</div>
+										))}
+									</div>
 								</div>
 								<div class="rounded-[1.5rem] bg-surface-container-lowest p-4">
 									<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Ambiance</div>
