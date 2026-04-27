@@ -50,6 +50,7 @@ const moments = [
 ];
 
 const heroPills = ['Petit-déjeuner local', 'Jardin privé', 'Suites lumineuses'];
+const AVIS_COMMENTAIRE_MAX_LENGTH = 500;
 
 export function Home({ siteInfo }) {
 	const site = normalizeSiteInfo(siteInfo);
@@ -65,6 +66,7 @@ export function Home({ siteInfo }) {
 	});
 	const [envoiEnCours, setEnvoiEnCours] = useState(false);
 	const [formMessage, setFormMessage] = useState(null);
+	const commentaireLength = nouvelAvis.commentaire.length;
 
 	useEffect(() => {
 		api.actualites
@@ -104,6 +106,15 @@ export function Home({ siteInfo }) {
 		setEnvoiEnCours(true);
 		setFormMessage(null);
 
+		if (commentaireLength > AVIS_COMMENTAIRE_MAX_LENGTH) {
+			setFormMessage({
+				type: 'error',
+				text: `Le message ne peut pas dépasser ${AVIS_COMMENTAIRE_MAX_LENGTH} caractères.`,
+			});
+			setEnvoiEnCours(false);
+			return;
+		}
+
 		try {
 			await api.avis.soumettre(nouvelAvis);
 			setFormMessage({
@@ -115,7 +126,7 @@ export function Home({ siteInfo }) {
 			console.error('Erreur envoi avis:', err);
 			setFormMessage({
 				type: 'error',
-				text: "L'envoi a échoué. Merci de réessayer dans quelques instants.",
+				text: err?.message || "L'envoi a échoué. Merci de réessayer dans quelques instants.",
 			});
 		} finally {
 			setEnvoiEnCours(false);
@@ -128,12 +139,13 @@ export function Home({ siteInfo }) {
 				<div class="absolute inset-0">
 					<img class="hero-zoom h-full w-full object-cover" alt="Patio de la maison d'hôtes" src={heroImage} loading="eager" />
 					<div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(28,27,18,0.7)_0%,rgba(28,27,18,0.42)_48%,rgba(253,250,241,0.98)_100%)]"></div>
+					<div class="hero-sweep"></div>
 					<div class="hero-orb orb-drift left-[-6rem] top-28 h-72 w-72 bg-primary/30"></div>
 					<div class="hero-orb orb-drift right-[-3rem] top-24 h-80 w-80 bg-tertiary/25"></div>
 				</div>
 
 				<div class="section-shell relative grid items-end gap-12 lg:grid-cols-[1.08fr_0.92fr]">
-					<Reveal class="max-w-3xl pb-10 text-white" delay={90}>
+					<Reveal variant="mask" class="max-w-3xl pb-10 text-white" delay={90}>
 						<span class="section-kicker border-white/15 bg-white/10 text-white/70">
 							L'expérience de l'or végétal
 						</span>
@@ -148,10 +160,10 @@ export function Home({ siteInfo }) {
 						</p>
 
 						<div class="mt-10 flex flex-wrap gap-4">
-						<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary">
+						<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary">
 							Découvrir les suites
 						</a>
-						<a href="#jardin" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/15">
+						<a href="#jardin" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/15">
 							Explorer le jardin
 						</a>
 						</div>
@@ -165,10 +177,10 @@ export function Home({ siteInfo }) {
 						</div>
 					</Reveal>
 
-					<Reveal class="relative" delay={220}>
+					<Reveal variant="zoom" class="relative" delay={220}>
 						<div class="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/20 blur-3xl page-glow"></div>
 						<div class="surface-card-strong p-4">
-							<div class="relative overflow-hidden rounded-[1.75rem]">
+							<div class="media-frame relative overflow-hidden rounded-[1.75rem]">
 								<img class="hero-zoom h-[28rem] w-full object-cover" alt="Petit-déjeuner artisanal" src={moments[0].image} loading="eager" />
 								<div class="absolute inset-0 bg-gradient-to-t from-[#111611]/58 via-transparent to-transparent"></div>
 							</div>
@@ -200,7 +212,7 @@ export function Home({ siteInfo }) {
 
 			<section id="jardin" class="section-shell scroll-mt-28 py-24 lg:scroll-mt-32 lg:py-28">
 				<div class="grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-					<Reveal class="order-2 lg:order-1" delay={80}>
+					<Reveal variant="left" class="order-2 lg:order-1" delay={80}>
 						<span class="section-kicker">Le jardin</span>
 						<h2 class="section-title mt-6">
 							Un décor solaire, silencieux et habité.
@@ -210,14 +222,14 @@ export function Home({ siteInfo }) {
 						</p>
 
 						<div class="mt-8 grid gap-4 sm:grid-cols-2">
-							<Reveal class="surface-card p-5" delay={80}>
+							<Reveal variant="fade" class="surface-card p-5" delay={80}>
 							<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Matin</div>
 							<div class="mt-3 font-serif text-2xl italic text-on-surface">Petit-déjeuner au soleil</div>
 							<p class="mt-3 text-sm leading-7 text-on-surface/70">
 								Une table simple, locale et généreuse pour démarrer sans précipitation.
 							</p>
 						</Reveal>
-						<Reveal class="surface-card p-5" delay={160}>
+						<Reveal variant="fade" class="surface-card p-5" delay={160}>
 							<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Atmosphère</div>
 							<div class="mt-3 font-serif text-2xl italic text-on-surface">Verdure et intimité</div>
 							<p class="mt-3 text-sm leading-7 text-on-surface/70">
@@ -227,10 +239,10 @@ export function Home({ siteInfo }) {
 						</div>
 					</Reveal>
 
-					<Reveal class="order-1 lg:order-2" delay={160}>
+					<Reveal variant="right" class="order-1 lg:order-2" delay={160}>
 						<div class="relative">
 							<div class="absolute -inset-6 rounded-[2.5rem] bg-primary/10 blur-2xl"></div>
-							<div class="surface-card-strong overflow-hidden">
+							<div class="surface-card-strong media-frame overflow-hidden">
 								<img class="h-[24rem] w-full object-cover sm:h-[32rem]" alt="Terrasse et jardin" src={gardenImage} loading="lazy" />
 								<div class="border-t border-primary/10 bg-white/92 p-6">
 									<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Terrasse principale</div>
@@ -250,12 +262,13 @@ export function Home({ siteInfo }) {
 						kicker="Nos suites"
 						title="Des suites pensées comme des refuges."
 						description="Lignes douces, matières naturelles et lumière filtrée composent trois signatures différentes, mais toujours calmes et élégantes."
+						variant="mask"
 						delay={60}
 					/>
 
 					<div class="mt-12 grid gap-8 md:grid-cols-3">
 						{suites.map((suite, index) => (
-							<SuiteCard key={suite.name} suite={suite} delay={index * 120} />
+							<SuiteCard key={suite.name} suite={suite} delay={index * 120} variant={['left', 'zoom', 'right'][index % 3]} />
 						))}
 					</div>
 				</div>
@@ -267,12 +280,13 @@ export function Home({ siteInfo }) {
 						kicker="Actualités"
 						title="Murmures du refuge."
 						description="Quelques instants, quelques nouvelles et des images du quotidien pour garder le lien avec la maison."
+						variant="left"
 						delay={80}
 					/>
 
 					<div class="mt-12 grid gap-8 md:grid-cols-3">
 						{actualites.slice(0, 3).map((actu, index) => (
-							<ArticleCard key={actu.id ?? actu.titre} item={actu} delay={index * 120} />
+							<ArticleCard key={actu.id ?? actu.titre} item={actu} delay={index * 120} variant={index % 2 === 0 ? 'mask' : 'zoom'} />
 						))}
 					</div>
 				</section>
@@ -284,12 +298,13 @@ export function Home({ siteInfo }) {
 						title="L'or du détail au service du calme."
 						description="Trois instants pour illustrer ce que l'on vient chercher ici: une table simple, un jardin vivant et des promenades lentes."
 						align="center"
+						variant="zoom"
 						delay={70}
 					/>
 
 				<div class="mt-12 grid gap-8 md:grid-cols-3">
 					{moments.map((moment, index) => (
-						<MomentCard key={moment.title} moment={moment} delay={index * 120} />
+						<MomentCard key={moment.title} moment={moment} delay={index * 120} variant={index % 2 === 0 ? 'left' : 'right'} />
 					))}
 				</div>
 			</section>
@@ -301,12 +316,13 @@ export function Home({ siteInfo }) {
 							kicker="Événements"
 							title="Instants présents."
 							description="Des rendez-vous plus ponctuels, mais toujours ancrés dans la même idée d'hospitalité calme et généreuse."
+							variant="right"
 							delay={80}
 						/>
 
 						<div class="mt-12 grid gap-6 md:grid-cols-3">
 							{evenements.map((event, index) => (
-								<EventCard key={event.id ?? `${event.date_evenement}-${event.titre}`} event={event} delay={index * 120} />
+								<EventCard key={event.id ?? `${event.date_evenement}-${event.titre}`} event={event} delay={index * 120} variant={index % 2 === 0 ? 'right' : 'left'} />
 							))}
 						</div>
 					</div>
@@ -318,6 +334,7 @@ export function Home({ siteInfo }) {
 						kicker="Livre d'or"
 						title="Les séjours laissent une trace."
 						description="Quand les voyageurs repartent avec plus de calme que d'habitude, les mots se déposent naturellement ici."
+						variant="left"
 						delay={90}
 					/>
 
@@ -325,7 +342,13 @@ export function Home({ siteInfo }) {
 					<div class="grid gap-6">
 						{avis.length > 0 ? (
 							avis.map((review, index) => (
-								<ReviewCard key={review.id ?? `${review.nom_client}-${index}`} review={review} featured={index === 1} delay={index * 120} />
+								<ReviewCard
+									key={review.id ?? `${review.nom_client}-${index}`}
+									review={review}
+									featured={index === 1}
+									delay={index * 120}
+									variant={index === 1 ? 'mask' : index % 2 === 0 ? 'lift' : 'fade'}
+								/>
 							))
 						) : (
 							<div class="surface-card p-8 text-sm leading-7 text-on-surface/70">
@@ -392,7 +415,7 @@ export function Home({ siteInfo }) {
 											key={value}
 											type="button"
 											onClick={() => setNouvelAvis({ ...nouvelAvis, note: value })}
-											class={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.28em] transition-colors duration-300 ${
+											class={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-[10px] font-black uppercase tracking-[0.28em] transition-colors duration-500 ${
 												Number(nouvelAvis.note) >= value
 													? 'border-primary/30 bg-primary/10 text-primary'
 													: 'border-primary/10 bg-white/70 text-outline hover:border-primary/30 hover:text-on-surface'
@@ -406,21 +429,32 @@ export function Home({ siteInfo }) {
 							</div>
 
 							<div class="space-y-3">
-								<label class="field-label">Votre message</label>
+								<div class="flex items-end justify-between gap-4">
+									<label class="field-label" htmlFor="avis-message">Votre message</label>
+									<div id="avis-message-count" class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">
+										{commentaireLength}/{AVIS_COMMENTAIRE_MAX_LENGTH}
+									</div>
+								</div>
 								<textarea
+									id="avis-message"
 									required
 									rows={5}
 									value={nouvelAvis.commentaire}
 									onInput={(e) => setNouvelAvis({ ...nouvelAvis, commentaire: e.target.value })}
 									class="field-textarea"
+									maxLength={AVIS_COMMENTAIRE_MAX_LENGTH}
+									aria-describedby="avis-message-help avis-message-count"
 									placeholder="Racontez-nous votre séjour..."
 								></textarea>
+								<p id="avis-message-help" class="text-[11px] leading-6 text-on-surface/55">
+									Le message est limité à {AVIS_COMMENTAIRE_MAX_LENGTH} caractères.
+								</p>
 							</div>
 
 							<button
 								type="submit"
 								disabled={envoiEnCours}
-								class="inline-flex w-full items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+								class="inline-flex w-full items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								{envoiEnCours ? 'Envoi en cours...' : "Soumettre au livre d'or"}
 							</button>
@@ -432,9 +466,9 @@ export function Home({ siteInfo }) {
 	);
 }
 
-function SectionHeading({ kicker, title, description, align = 'left', delay = 0 }) {
+function SectionHeading({ kicker, title, description, align = 'left', delay = 0, variant = 'lift' }) {
 	return (
-		<Reveal class={`max-w-3xl ${align === 'center' ? 'mx-auto text-center' : ''}`} delay={delay}>
+		<Reveal variant={variant} class={`max-w-3xl ${align === 'center' ? 'mx-auto text-center' : ''}`} delay={delay}>
 			<span class="section-kicker">{kicker}</span>
 			<h2 class="section-title mt-6">{title}</h2>
 			{description && <p class="section-copy mt-6">{description}</p>}
@@ -442,12 +476,12 @@ function SectionHeading({ kicker, title, description, align = 'left', delay = 0 
 	);
 }
 
-function SuiteCard({ suite, delay = 0 }) {
+function SuiteCard({ suite, delay = 0, variant = 'zoom' }) {
 	return (
-		<Reveal as="article" class="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/80 shadow-soft transition-transform duration-300 hover:-translate-y-1" delay={delay}>
-			<div class="relative overflow-hidden">
+		<Reveal variant={variant} as="article" class="group overflow-hidden rounded-[2rem] border border-white/70 bg-white/80 shadow-soft transition-transform duration-500 hover:-translate-y-1" delay={delay}>
+			<div class="media-frame relative overflow-hidden">
 				<img
-					class="h-[22rem] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+					class="h-[22rem] w-full object-cover transition-transform duration-1000"
 					src={`https://lh3.googleusercontent.com/aida-public/${suite.image}`}
 					alt={suite.name}
 					loading="lazy"
@@ -467,62 +501,63 @@ function SuiteCard({ suite, delay = 0 }) {
 	);
 }
 
-function ArticleCard({ item, delay = 0 }) {
+function ArticleCard({ item, delay = 0, variant = 'mask' }) {
 	const image = resolveBackendAssetUrl(item.image_url) || `https://picsum.photos/seed/${item.id}/900/700`;
 
 	return (
-		<Reveal as="article" class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={delay}>
-			<div class="overflow-hidden">
-				<img class="h-64 w-full object-cover transition-transform duration-700 hover:scale-105" src={image} alt={item.titre} loading="lazy" />
+		<Reveal variant={variant} as="article" class="surface-card overflow-hidden transition-transform duration-500 hover:-translate-y-1" delay={delay}>
+			<div class="media-frame overflow-hidden">
+				<img class="h-64 w-full object-cover transition-transform duration-1000" src={image} alt={item.titre} loading="lazy" />
 			</div>
 			<div class="p-6">
 				<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">{item.date_publication}</div>
-				<h3 class="mt-4 font-serif text-2xl italic text-on-surface">{item.titre}</h3>
-				<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70">{item.contenu}</p>
+				<h3 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{item.titre}</h3>
+				<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70 text-flow">{item.contenu}</p>
 			</div>
 		</Reveal>
 	);
 }
 
-function MomentCard({ moment, delay = 0 }) {
+function MomentCard({ moment, delay = 0, variant = 'lift' }) {
 	return (
-		<Reveal as="article" class="surface-card-strong overflow-hidden transition-transform duration-300 hover:-translate-y-1" delay={delay}>
-			<div class="overflow-hidden">
-				<img class="h-72 w-full object-cover transition-transform duration-700 hover:scale-105" src={moment.image} alt={moment.title} loading="lazy" />
+		<Reveal variant={variant} as="article" class="surface-card-strong overflow-hidden transition-transform duration-500 hover:-translate-y-1" delay={delay}>
+			<div class="media-frame overflow-hidden">
+				<img class="h-72 w-full object-cover transition-transform duration-1000" src={moment.image} alt={moment.title} loading="lazy" />
 			</div>
 			<div class="p-6">
 				<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">Instant</div>
-				<h3 class="mt-4 font-serif text-2xl italic text-on-surface">{moment.title}</h3>
-				<p class="mt-4 text-sm leading-7 text-on-surface/70">{moment.description}</p>
+				<h3 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{moment.title}</h3>
+				<p class="mt-4 text-sm leading-7 text-on-surface/70 text-flow">{moment.description}</p>
 			</div>
 		</Reveal>
 	);
 }
 
-function EventCard({ event, delay = 0 }) {
+function EventCard({ event, delay = 0, variant = 'right' }) {
 	const image = resolveBackendAssetUrl(event.image_url);
 
 	return (
-		<Reveal as="article" class="surface-card p-6 transition-transform duration-300 hover:-translate-y-1" delay={delay}>
+		<Reveal variant={variant} as="article" class="surface-card p-6 transition-transform duration-500 hover:-translate-y-1" delay={delay}>
 			{image && (
-				<div class="overflow-hidden rounded-[1.5rem]">
-					<img class="h-56 w-full object-cover transition-transform duration-700 hover:scale-105" src={image} alt={event.titre} loading="lazy" />
+				<div class="media-frame overflow-hidden rounded-[1.5rem]">
+					<img class="h-56 w-full object-cover transition-transform duration-1000" src={image} alt={event.titre} loading="lazy" />
 				</div>
 			)}
 			<div class="inline-flex rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-tertiary">
 				{event.date_evenement}
 			</div>
-			<h3 class="mt-6 font-serif text-2xl italic text-on-surface">{event.titre}</h3>
-			<p class="mt-4 text-sm leading-7 text-on-surface/70">{event.description}</p>
+			<h3 class="mt-6 font-serif text-2xl italic text-on-surface text-flow">{event.titre}</h3>
+			<p class="mt-4 text-sm leading-7 text-on-surface/70 text-flow">{event.description}</p>
 		</Reveal>
 	);
 }
 
-function ReviewCard({ review, featured = false, delay = 0 }) {
+function ReviewCard({ review, featured = false, delay = 0, variant = 'lift' }) {
 	const note = Math.max(0, Math.min(5, Number.parseInt(review.note, 10) || 0));
+	const formattedDate = formatReviewDate(review.date_sejour);
 
 	return (
-		<Reveal as="article" class={`surface-card p-6 ${featured ? 'border-primary/20 bg-white shadow-lift' : ''}`} delay={delay}>
+		<Reveal variant={variant} as="article" class={`surface-card p-6 ${featured ? 'border-primary/20 bg-white shadow-lift' : ''}`} delay={delay}>
 			<div class="flex items-center gap-1 text-primary">
 				{Array.from({ length: 5 }, (_, index) => (
 					<span key={index} class={`material-symbols-outlined text-lg ${index < note ? 'opacity-100' : 'opacity-25'}`}>
@@ -530,18 +565,43 @@ function ReviewCard({ review, featured = false, delay = 0 }) {
 					</span>
 				))}
 			</div>
-			<p class="mt-5 font-serif text-lg italic leading-8 text-on-surface/85">
+			<p class="mt-5 font-serif text-lg italic leading-8 text-on-surface/85 text-flow">
 				"{review.commentaire || 'Sans commentaire'}"
 			</p>
 			<div class="mt-6 flex items-center gap-4">
 				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary font-serif text-lg font-bold">
 					{((review.nom_client || '?')[0] || '?').toUpperCase()}
 				</div>
-				<div>
-					<div class="font-serif text-lg italic text-on-surface">{review.nom_client || 'Client anonyme'}</div>
-					<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">{review.date_sejour || 'Date inconnue'}</div>
+				<div class="min-w-0">
+					<div class="font-serif text-lg italic text-on-surface text-flow">{review.nom_client || 'Client anonyme'}</div>
+					<div class="text-[10px] font-black uppercase tracking-[0.3em] text-outline">{formattedDate}</div>
 				</div>
 			</div>
 		</Reveal>
 	);
+}
+
+function formatReviewDate(value) {
+	if (!value) {
+		return 'Date inconnue';
+	}
+
+	let parsedDate;
+
+	if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+		const [year, month, day] = value.split('-').map(Number);
+		parsedDate = new Date(year, month - 1, day);
+	} else {
+		parsedDate = new Date(value);
+	}
+
+	if (Number.isNaN(parsedDate.getTime())) {
+		return value;
+	}
+
+	return parsedDate.toLocaleDateString('fr-FR', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+	});
 }

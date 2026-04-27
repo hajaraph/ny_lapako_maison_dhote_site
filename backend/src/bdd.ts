@@ -37,6 +37,28 @@ export function initialiserTables() {
         console.log("⚠ Impossible d'initialiser les informations du site.");
     }
 
+    try {
+        sqlite.exec(`
+            CREATE TRIGGER IF NOT EXISTS avis_clients_commentaire_limit_insert
+            BEFORE INSERT ON avis_clients
+            FOR EACH ROW
+            WHEN NEW.commentaire IS NOT NULL AND length(NEW.commentaire) > 500
+            BEGIN
+                SELECT RAISE(ABORT, 'Le message client ne peut pas dépasser 500 caractères.');
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS avis_clients_commentaire_limit_update
+            BEFORE UPDATE OF commentaire ON avis_clients
+            FOR EACH ROW
+            WHEN NEW.commentaire IS NOT NULL AND length(NEW.commentaire) > 500
+            BEGIN
+                SELECT RAISE(ABORT, 'Le message client ne peut pas dépasser 500 caractères.');
+            END;
+        `);
+    } catch (e) {
+        console.log("⚠ Impossible de créer la contrainte de longueur des avis.");
+    }
+
     // Créer un admin par défaut si la table existe et est vide
     try {
         const verifAdmin = db.select().from(schema.administrateurs).limit(1).get();

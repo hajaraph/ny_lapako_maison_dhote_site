@@ -3,7 +3,7 @@ import { Reveal } from '../components/Reveal.jsx';
 export function NotFound() {
 	return (
 		<section class="section-shell flex min-h-[70vh] items-center justify-center py-24 text-center">
-			<Reveal class="surface-card-strong max-w-2xl p-10 sm:p-14" delay={120}>
+			<Reveal variant="mask" class="surface-card-strong max-w-2xl p-10 sm:p-14" delay={120}>
 				<div class="mx-auto inline-flex rounded-full bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
 					404
 				</div>

@@ -51,7 +51,7 @@ export function Login() {
 
 			<div class="section-shell flex min-h-screen items-center py-12 lg:py-20">
 				<div class="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-					<Reveal class="surface-card-strong flex flex-col justify-between p-8 lg:p-10" delay={120}>
+					<Reveal variant="left" class="surface-card-strong flex flex-col justify-between p-8 lg:p-10" delay={120}>
 						<div class="space-y-8">
 							<div class="inline-flex rounded-full bg-primary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-primary">
 								Espace administrateur
@@ -74,7 +74,7 @@ export function Login() {
 						</div>
 					</Reveal>
 
-					<Reveal class="surface-card-strong p-8 lg:p-10" delay={220}>
+					<Reveal variant="mask" class="surface-card-strong p-8 lg:p-10" delay={220}>
 						<h2 class="font-serif text-4xl italic text-on-surface">Se connecter</h2>
 						<p class="mt-4 text-sm leading-7 text-on-surface/70">
 							Utilisez vos identifiants administrateur pour ouvrir la session.
@@ -141,7 +141,7 @@ export function Login() {
 							<button
 								type="submit"
 								disabled={loading}
-								class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+							class="inline-flex w-full items-center justify-center gap-3 rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								{loading ? (
 									<span class="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
@@ -162,7 +162,7 @@ export function Login() {
 
 function LoginStat({ label, value, delay = 0 }) {
 	return (
-		<Reveal class="rounded-[1.5rem] border border-primary/10 bg-white/80 p-5 shadow-soft" delay={delay}>
+		<Reveal variant="zoom" class="rounded-[1.5rem] border border-primary/10 bg-white/80 p-5 shadow-soft" delay={delay}>
 			<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">{label}</div>
 			<div class="mt-3 font-serif text-2xl italic text-on-surface">{value}</div>
 		</Reveal>

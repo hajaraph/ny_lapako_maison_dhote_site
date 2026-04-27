@@ -159,7 +159,7 @@ export function AdminDashboard() {
 							<button
 								type="button"
 								onClick={() => route('/')}
-								class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-on-primary shadow-soft transition-transform duration-300 hover:-translate-y-0.5"
+								class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-on-primary shadow-soft transition-transform duration-500 hover:-translate-y-0.5"
 							>
 								<span class="material-symbols-outlined text-[22px]">spa</span>
 							</button>
@@ -192,7 +192,7 @@ export function AdminDashboard() {
 						<button
 							type="button"
 							onClick={deconnexion}
-							class="flex w-full items-center gap-4 rounded-[1.75rem] bg-white/10 px-5 py-4 text-white transition-colors duration-300 hover:bg-white/15"
+							class="flex w-full items-center gap-4 rounded-[1.75rem] bg-white/10 px-5 py-4 text-white transition-colors duration-500 hover:bg-white/15"
 						>
 							<span class="material-symbols-outlined">logout</span>
 							<span class="text-[10px] font-black uppercase tracking-[0.3em]">Déconnexion</span>
@@ -218,8 +218,8 @@ export function AdminDashboard() {
 										class="h-11 w-11 rounded-full"
 									/>
 									<div class="pr-2">
-										<div class="text-xs font-black uppercase tracking-[0.28em] text-on-surface">{profil.nom}</div>
-										<div class="text-[10px] uppercase tracking-[0.28em] text-outline">{profil.email}</div>
+										<div class="text-xs font-black uppercase tracking-[0.28em] text-on-surface text-flow">{profil.nom}</div>
+										<div class="text-[10px] uppercase tracking-[0.28em] text-outline text-flow">{profil.email}</div>
 									</div>
 								</div>
 								<button
@@ -293,7 +293,7 @@ function SidebarLink({ icon, label, active, onClick }) {
 		<button
 			type="button"
 			onClick={onClick}
-			class={`flex w-full items-center gap-4 rounded-[1.5rem] px-5 py-4 text-left transition-all duration-300 ${
+			class={`flex w-full items-center gap-4 rounded-[1.5rem] px-5 py-4 text-left transition-all duration-500 ${
 				active ? 'bg-primary text-on-primary shadow-soft' : 'text-white/55 hover:bg-white/8 hover:text-white'
 			}`}
 		>
@@ -596,7 +596,7 @@ function NewsManager({ data, onRefresh }) {
 						<button
 							type="submit"
 							disabled={saving}
-							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : "Créer l'actualité"}
 						</button>
@@ -623,7 +623,7 @@ function NewsManager({ data, onRefresh }) {
 						<Reveal
 							key={actu.id}
 							as="article"
-							class="surface-card overflow-hidden transition-transform duration-300 hover:-translate-y-1"
+							class="surface-card overflow-hidden transition-transform duration-500 hover:-translate-y-1"
 							delay={index * 120}
 						>
 							<img
@@ -636,8 +636,8 @@ function NewsManager({ data, onRefresh }) {
 								<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
 									{actu.date_publication || 'Date non définie'}
 								</div>
-								<h4 class="mt-4 font-serif text-2xl italic text-on-surface">{actu.titre}</h4>
-								<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70">{actu.contenu}</p>
+								<h4 class="mt-4 font-serif text-2xl italic text-on-surface text-flow">{actu.titre}</h4>
+								<p class="mt-4 line-clamp-3 text-sm leading-7 text-on-surface/70 text-flow">{actu.contenu}</p>
 								<div class="mt-6 flex flex-wrap items-center justify-between gap-4">
 									<div class="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
 										{actu.statut || 'brouillon'}
@@ -910,7 +910,7 @@ function EventsManager({ data, onRefresh }) {
 						<button
 							type="submit"
 							disabled={saving}
-							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : 'Créer'}
 						</button>
@@ -950,8 +950,8 @@ function EventsManager({ data, onRefresh }) {
 									<div class="text-[10px] font-black uppercase tracking-[0.32em] text-primary">
 										{formatEventDate(event.date_evenement)}
 									</div>
-									<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{event.titre}</h4>
-									<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70">{event.description}</p>
+									<h4 class="mt-3 font-serif text-2xl italic text-on-surface text-flow">{event.titre}</h4>
+									<p class="mt-4 max-w-2xl text-sm leading-7 text-on-surface/70 text-flow">{event.description}</p>
 									<div class="mt-4 flex flex-wrap items-center gap-2">
 										<span class="rounded-full bg-tertiary/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.32em] text-tertiary">
 											{formatEventStatus(event.statut)}
@@ -1043,7 +1043,7 @@ function ReviewsManager({ data, onModerer }) {
 						</div>
 						<div class="min-w-0 flex-1 space-y-4">
 							<div class="flex flex-wrap items-center gap-3">
-								<span class="font-black uppercase tracking-[0.26em] text-on-surface">{review.nom_client || 'Client anonyme'}</span>
+								<span class="font-black uppercase tracking-[0.26em] text-on-surface text-flow">{review.nom_client || 'Client anonyme'}</span>
 								<span
 									class={`rounded-full px-3 py-2 text-[9px] font-black uppercase tracking-[0.32em] ${
 										review.statut === 'approuve' || review.statut === 'Approuvé'
@@ -1055,7 +1055,7 @@ function ReviewsManager({ data, onModerer }) {
 								</span>
 							</div>
 
-							<p class="text-base italic leading-8 text-on-surface/75">"{review.commentaire || 'Sans commentaire'}"</p>
+							<p class="text-base italic leading-8 text-on-surface/75 text-flow">"{review.commentaire || 'Sans commentaire'}"</p>
 
 							<div class="flex flex-wrap gap-3 pt-2">
 								{review.statut !== 'approuve' && review.statut !== 'Approuvé' && (
@@ -1268,7 +1268,7 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 						<button
 							type="submit"
 							disabled={saving}
-							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+							class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{saving ? 'Enregistrement...' : editionId ? 'Mettre à jour' : 'Créer le compte'}
 						</button>
@@ -1291,8 +1291,8 @@ function AccountsManager({ data, profil, setProfil, onRefresh }) {
 									<div class="text-[10px] font-black uppercase tracking-[0.32em] text-outline">
 										Administrateur
 									</div>
-									<h4 class="mt-3 font-serif text-2xl italic text-on-surface">{compte.nom}</h4>
-									<p class="mt-2 text-sm leading-7 text-on-surface/70">{compte.email}</p>
+									<h4 class="mt-3 font-serif text-2xl italic text-on-surface text-flow">{compte.nom}</h4>
+									<p class="mt-2 text-sm leading-7 text-on-surface/70 text-flow">{compte.email}</p>
 								</div>
 
 								<div class="flex flex-wrap items-center gap-3">
@@ -1483,7 +1483,7 @@ function SiteSettingsManager({ data, setData }) {
 					<button
 						type="submit"
 						disabled={saving}
-						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
 					>
 						{saving ? 'Enregistrement...' : 'Mettre à jour'}
 					</button>
@@ -1555,7 +1555,7 @@ function ProfileManager({ profil, setProfil }) {
 					<button
 						type="button"
 						onClick={enregistrer}
-						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
+						class="inline-flex items-center justify-center rounded-full bg-on-surface px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-white transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
 					>
 						Sauvegarder
 					</button>

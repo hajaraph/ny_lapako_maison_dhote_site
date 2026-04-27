@@ -6,6 +6,7 @@ export function Reveal({
 	delay = 0,
 	threshold = 0.18,
 	once = true,
+	variant = 'lift',
 	style = {},
 	children,
 	...props
@@ -42,7 +43,7 @@ export function Reveal({
 	return (
 		<Tag
 			ref={ref}
-			class={['reveal', visible ? 'is-visible' : '', className].filter(Boolean).join(' ')}
+			class={['reveal', `reveal--${variant}`, visible ? 'is-visible' : '', className].filter(Boolean).join(' ')}
 			style={{ ...style, '--reveal-delay': `${delay}ms` }}
 			{...props}
 		>

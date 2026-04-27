@@ -42,7 +42,7 @@ export function Footer({ siteInfo }) {
 			<div class="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-tertiary/15 blur-3xl orb-drift"></div>
 
 			<div class="section-shell-wide relative py-20 lg:py-24">
-				<Reveal class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]" delay={120}>
+				<Reveal variant="right" class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]" delay={120}>
 					<div class="surface-card-strong border-white/10 bg-white/5 p-8 text-white lg:p-10">
 						<div class="flex flex-col gap-8">
 							<div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -58,7 +58,7 @@ export function Footer({ siteInfo }) {
 									</p>
 								</div>
 
-								<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-primary transition-transform duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-on-surface">
+								<a href="#suites" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-primary transition-transform duration-500 hover:-translate-y-0.5 hover:bg-white hover:text-on-surface">
 									Voir les suites
 								</a>
 							</div>
@@ -107,7 +107,7 @@ export function Footer({ siteInfo }) {
 								/>
 								<button
 									type="submit"
-									class="inline-flex items-center justify-center rounded-full bg-white px-5 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
+									class="inline-flex items-center justify-center rounded-full bg-white px-5 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-on-surface transition-transform duration-500 hover:-translate-y-0.5 hover:bg-primary hover:text-on-primary"
 								>
 									S'inscrire
 								</button>
@@ -116,7 +116,7 @@ export function Footer({ siteInfo }) {
 					</div>
 				</Reveal>
 
-				<Reveal class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between" delay={220}>
+				<Reveal variant="fade" class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between" delay={220}>
 					<div class="text-[10px] font-black uppercase tracking-[0.32em] text-white/35">
 						© 2026 Copyright{' '}
 						<a
