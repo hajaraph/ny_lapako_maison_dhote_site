@@ -36,6 +36,10 @@ routeAvis.post('/', async (c) => {
         return c.json({ error: 'Le message du client est requis' }, 400);
     }
 
+    if (!dateSejour) {
+        return c.json({ error: 'La date de séjour est requise' }, 400);
+    }
+
     if (commentaire.length > MAX_COMMENTAIRE_LENGTH) {
         return c.json({ error: COMMENTAIRE_TROP_LONG }, 400);
     }
