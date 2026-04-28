@@ -3,7 +3,7 @@ import { hash } from 'argon2';
 import sanitizeHtml from 'sanitize-html';
 import { db } from '../bdd';
 import { actualites, administrateurs, avisClients, evenements, siteSettings } from '../db/schema';
-import { asc, desc, eq } from 'drizzle-orm';
+import { asc, desc, eq, isNull } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { lireActualiteDepuisRequete, supprimerImageActualiteLocale } from '../lib/actualiteMedia';
 import { lireEvenementDepuisRequete, supprimerImageLocale } from '../lib/evenementMedia';
@@ -279,7 +279,11 @@ routeAdmin.delete('/comptes/:id', async (c) => {
 });
 
 routeAdmin.get('/actualites', async (c) => {
-    const data = await db.select().from(actualites).orderBy(desc(actualites.id)).all();
+    const data = await db.select()
+        .from(actualites)
+        .where(isNull(actualites.deleted_at))
+        .orderBy(desc(actualites.id))
+        .all();
     return c.json(data);
 });
 
@@ -356,13 +360,26 @@ routeAdmin.delete('/actualites/:id', async (c) => {
         .limit(1)
         .get();
 
-    await db.delete(actualites).where(eq(actualites.id, id)).run();
+    if (!actualiteExistant) {
+        return c.json({ error: 'Actualité introuvable' }, 404);
+    }
+
+    // Soft delete
+    await db.update(actualites)
+        .set({ deleted_at: Math.floor(Date.now() / 1000) })
+        .where(eq(actualites.id, id))
+        .run();
+    
     await supprimerImageActualiteLocale(actualiteExistant?.image_url ?? '');
     return c.json({ message: "Actualité supprimée" });
 });
 
 routeAdmin.get('/evenements', async (c) => {
-    const data = await db.select().from(evenements).orderBy(asc(evenements.date_evenement)).all();
+    const data = await db.select()
+        .from(evenements)
+        .where(isNull(evenements.deleted_at))
+        .orderBy(asc(evenements.date_evenement))
+        .all();
     return c.json(data);
 });
 

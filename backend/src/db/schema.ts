@@ -5,6 +5,7 @@ export const administrateurs = sqliteTable("administrateurs", {
     nom: text("nom").notNull(),
     email: text("email").unique().notNull(),
     mot_de_passe: text("mot_de_passe").notNull(),
+    deleted_at: integer("deleted_at"), // Timestamp de suppression pour soft delete
 });
 
 export const actualites = sqliteTable("actualites", {
@@ -14,6 +15,7 @@ export const actualites = sqliteTable("actualites", {
     image_url: text("image_url"),
     date_publication: text("date_publication"),
     statut: text("statut").default("brouillon"),
+    deleted_at: integer("deleted_at"), // Timestamp de suppression pour soft delete
 });
 
 export const evenements = sqliteTable("evenements", {
@@ -23,6 +25,7 @@ export const evenements = sqliteTable("evenements", {
     date_evenement: text("date_evenement"),
     image_url: text("image_url"),
     statut: text("statut").default("actif"),
+    deleted_at: integer("deleted_at"), // Timestamp de suppression pour soft delete
 });
 
 export const avisClients = sqliteTable("avis_clients", {
@@ -32,6 +35,7 @@ export const avisClients = sqliteTable("avis_clients", {
     note: integer("note").default(5),
     date_sejour: text("date_sejour"),
     statut: text("statut").default("en_attente"),
+    deleted_at: integer("deleted_at"), // Timestamp de suppression pour soft delete
 });
 
 export const siteSettings = sqliteTable("site_settings", {

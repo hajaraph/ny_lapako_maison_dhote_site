@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
 import { actualites } from '../db/schema';
-import { desc, eq, count } from 'drizzle-orm';
+import { desc, eq, count, isNull } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { lireActualiteDepuisRequete, supprimerImageActualiteLocale } from '../lib/actualiteMedia';
 import { getPaginationParams, getOffset, createPaginatedResult } from '../lib/pagination';
@@ -12,11 +12,12 @@ routeActualites.get('/', async (c) => {
     const { page, limit } = getPaginationParams(c.req.url);
     const offset = getOffset(page, limit);
     
-    const countResult = await db.select({ value: count() }).from(actualites);
+    const countResult = await db.select({ value: count() }).from(actualites).where(isNull(actualites.deleted_at));
     const total = countResult[0]?.value ?? 0;
     
     const data = await db.select()
         .from(actualites)
+        .where(isNull(actualites.deleted_at))
         .orderBy(desc(actualites.id))
         .limit(limit)
         .offset(offset)
@@ -55,7 +56,16 @@ routeActualites.delete('/:id', adminAuth, async (c) => {
         .limit(1)
         .get();
 
-    await db.delete(actualites).where(eq(actualites.id, id)).run();
+    if (!actualiteExistant) {
+        return c.json({ error: 'Actualité introuvable' }, 404);
+    }
+
+    // Soft delete : marquer deleted_at au lieu de supprimer
+    await db.update(actualites)
+        .set({ deleted_at: Math.floor(Date.now() / 1000) })
+        .where(eq(actualites.id, id))
+        .run();
+    
     await supprimerImageActualiteLocale(actualiteExistant?.image_url ?? '');
     return c.json({ message: "Actualité supprimée" });
 });

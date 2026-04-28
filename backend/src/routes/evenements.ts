@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
 import { evenements } from '../db/schema';
-import { asc, count } from 'drizzle-orm';
+import { asc, count, isNull } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { lireEvenementDepuisRequete } from '../lib/evenementMedia';
 import { getPaginationParams, getOffset, createPaginatedResult } from '../lib/pagination';
@@ -12,11 +12,12 @@ routeEvenements.get('/', async (c) => {
     const { page, limit } = getPaginationParams(c.req.url);
     const offset = getOffset(page, limit);
     
-    const countResult = await db.select({ value: count() }).from(evenements);
+    const countResult = await db.select({ value: count() }).from(evenements).where(isNull(evenements.deleted_at));
     const total = countResult[0]?.value ?? 0;
     
     const data = await db.select()
         .from(evenements)
+        .where(isNull(evenements.deleted_at))
         .orderBy(asc(evenements.date_evenement))
         .limit(limit)
         .offset(offset)
