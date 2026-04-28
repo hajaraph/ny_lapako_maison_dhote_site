@@ -6,6 +6,16 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Ajout suppression avis clients admin
+
+- Ajout route DELETE /admin/avis/:id dans backend.
+- Ajout bouton suppression dans le manager d'avis du Dashboard.
+- Confirmation avant suppression via confirm().
+- Fichiers modifiés :
+  - `backend/src/routes/admin.ts`
+  - `frontend/src/api.js`
+  - `frontend/src/pages/Admin/Dashboard.jsx`
+
 ### 2026-04-28 - Correction CORS et validation avis
 
 - CORS corrigé pour autoriser tous les ports localhost et 127.0.0.1 en développement.
