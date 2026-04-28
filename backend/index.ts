@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { rateLimiter } from 'hono-rate-limiter';
 import path from 'node:path';
 import { stat } from 'node:fs/promises';
 import { initialiserTables } from './src/bdd';
@@ -41,9 +42,20 @@ app.get('/uploads/*', async (c) => {
   });
 });
 
-// Configuration globale des CORS
+// Configuration CORS basée sur l'environnement
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:80', 'http://localhost'];
+
 app.use('/*', cors({
-  origin: '*', // En développement, on peut garder *, ou spécifier 'http://localhost:5173'
+  origin: (origin) => {
+    // En production: vérifier l'origin, en dev: autoriser si pas d'origin ou localhost
+    if (!origin || allowedOrigins.includes(origin)) {
+      return origin;
+    }
+    // Bloquer les origins non autorisés
+    return null;
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
@@ -53,6 +65,16 @@ app.use('/*', cors({
 
 // Initialisation de la base de données
 await initialiserTables();
+
+// Rate limiting pour l'authentification (5 tentatives par 15 minutes par IP)
+const authRateLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5, // 5 requêtes max
+  standardHeaders: true,
+  keyGenerator: (c) => c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown',
+});
+
+app.use('/auth/login', authRateLimiter);
 
 // Montage des routes (Versioning ou simple préfixe)
 app.route('/auth', routeAuth);

@@ -6,6 +6,20 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Sécurité P1: CORS restrictif et Rate limiting
+
+- CORS restreint aux origins autorisées via `ALLOWED_ORIGINS` (env var) :
+  - Par défaut: `localhost:5173, localhost:4173, localhost:80, localhost`
+  - En production: définir `ALLOWED_ORIGINS=https://votredomaine.com`
+  - Les requêtes d'origins non autorisées sont rejetées.
+- Rate limiting ajouté sur `/auth/login` :
+  - 5 tentatives maximum par IP sur une fenêtre de 15 minutes.
+  - Protection contre brute-force sur l'authentification.
+- Ajout de la dépendance `hono-rate-limiter`.
+- Fichiers modifiés :
+  - `backend/package.json`
+  - `backend/index.ts`
+
 ### 2026-04-28 - Sécurité P0: Hashage mots de passe et JWT_SECRET
 
 - **IMPORTANT**: Les mots de passe sont désormais hashés avec Argon2. Les comptes existants en clair ne fonctionnent plus.
@@ -212,3 +226,17 @@ Le frontend est une application moderne construite avec Preact et Vite.
 Variables utiles pour Docker Compose (optionnelles) :
 - `FRONTEND_PORT` (défaut `80`)
 - `VITE_API_BASE_URL` (défaut `/api` en mode Docker/Nginx)
+
+### Variables d'Environnement Backend (Sécurité)
+
+**Requises en production** :
+- `JWT_SECRET` : Clé secrète pour la signature des tokens JWT. Générer une valeur aléatoire forte.
+- `ALLOWED_ORIGINS` : Origines CORS autorisées (ex: `https://monsite.com,https://admin.monsite.com`).
+
+**Exemple fichier `.env`** :
+```
+JWT_SECRET=votre_secret_jwt_tres_long_et_aleatoire_64caracteresmin
+ALLOWED_ORIGINS=https://nylapako.fr,https://www.nylapako.fr
+```
+
+**Note** : Sans ces variables, l'application fonctionne mais avec des paramètres moins sécurisés (JWT_SECRET aléatoire à chaque redémarrage, CORS permissif sur localhost).
