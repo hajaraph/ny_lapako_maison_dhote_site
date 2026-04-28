@@ -5,6 +5,7 @@ import path from 'node:path';
 import { stat } from 'node:fs/promises';
 import { initialiserTables } from './src/bdd';
 import { UPLOADS_ROOT } from './src/lib/evenementMedia';
+import { logger, httpLogger } from './src/lib/logger';
 
 // Importation des modules de routes
 import routeAuth from './src/routes/auth';
@@ -15,6 +16,20 @@ import routeAvis from './src/routes/avis';
 import routeSiteInfo from './src/routes/siteInfo';
 
 const app = new Hono();
+
+// Middleware de logging des requêtes HTTP
+app.use('/*', async (c, next) => {
+    const start = Date.now();
+    await next();
+    const duration = Date.now() - start;
+    
+    httpLogger.info({
+        method: c.req.method,
+        path: c.req.path,
+        status: c.res.status,
+        duration,
+    }, 'HTTP Request');
+});
 
 app.get('/uploads/*', async (c) => {
   const { pathname } = new URL(c.req.url);
@@ -101,4 +116,4 @@ export default {
     fetch: app.fetch,
 };
 
-console.log("✔ Serveur démarré sur http://localhost:3000");
+logger.info({ port: 3000, url: 'http://localhost:3000' }, 'Serveur démarré');

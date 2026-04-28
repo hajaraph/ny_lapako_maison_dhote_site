@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/bun-sqlite";
 import { hash } from "argon2";
 import { DEFAULT_SITE_SETTINGS } from "./lib/siteSettings";
 import * as schema from "./db/schema";
+import { dbLogger, errorLogger } from "./lib/logger";
 
 // Support DB_PATH pour tests (fichier temporaire), sinon maison.sqlite par défaut
 const DB_PATH = process.env.DB_PATH || "maison.sqlite";
@@ -34,10 +35,10 @@ export async function initialiserTables() {
 
         if (!siteSettingsExistant) {
             db.insert(schema.siteSettings).values(DEFAULT_SITE_SETTINGS).run();
-            console.log("✔ Informations du site prêtes.");
+            dbLogger.info({}, 'Informations du site initialisées');
         }
     } catch (e) {
-        console.log("⚠ Impossible d'initialiser les informations du site.");
+        errorLogger.error({ error: e }, 'Impossible d\'initialiser les informations du site');
     }
 
     try {
@@ -59,7 +60,7 @@ export async function initialiserTables() {
             END;
         `);
     } catch (e) {
-        console.log("⚠ Impossible de créer la contrainte de longueur des avis.");
+        errorLogger.error({ error: e }, 'Impossible de créer la contrainte de longueur des avis');
     }
 
     // Créer un admin par défaut si la table existe et est vide
@@ -73,9 +74,9 @@ export async function initialiserTables() {
                 email: "admin@nylapako.fr",
                 mot_de_passe: hashedPassword
             }).run();
-            console.log("✔ Compte admin par défaut prêt (mot de passe: admin123).");
+            dbLogger.info({ email: 'admin@nylapako.fr' }, 'Compte admin par défaut créé');
         }
     } catch (e) {
-        console.log("⚠ Impossible de vérifier l'admin. Assurez-vous que les migrations sont appliquées.");
+        errorLogger.error({ error: e }, 'Impossible de vérifier l\'admin');
     }
 }
