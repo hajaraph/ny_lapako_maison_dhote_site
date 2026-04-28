@@ -500,6 +500,16 @@ routeAdmin.delete('/avis/:id', async (c) => {
         return c.json({ error: 'Identifiant invalide' }, 400);
     }
 
+    const avisExistant = await db.select({ id: avisClients.id })
+        .from(avisClients)
+        .where(eq(avisClients.id, id))
+        .limit(1)
+        .get();
+
+    if (!avisExistant) {
+        return c.json({ error: 'Avis introuvable' }, 404);
+    }
+
     await db.delete(avisClients)
         .where(eq(avisClients.id, id))
         .run();
