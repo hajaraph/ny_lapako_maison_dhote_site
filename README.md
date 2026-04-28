@@ -6,6 +6,14 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Correction CORS et validation avis
+
+- CORS corrigé pour autoriser tous les ports localhost et 127.0.0.1 en développement.
+- Rend `date_sejour` obligatoire pour les avis clients.
+- Fichiers modifiés :
+  - `backend/index.ts`
+  - `backend/src/routes/avis.ts`
+
 ### 2026-04-28 - Corrections diverses
 
 - Suppression volume `backend-data` inutile dans docker-compose.yml (le code est dans l'image Docker).
