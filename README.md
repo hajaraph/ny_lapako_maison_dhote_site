@@ -6,6 +6,18 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Tests unitaires backend (structure initiale)
+
+- Création dossier `backend/tests/` avec configuration de test.
+- Tests pour routes auth (login) et avis (CRUD, validations).
+- Script `bun test` ajouté dans `package.json`.
+- Utilisation de base de données SQLite in-memory pour tests isolés.
+- Fichiers ajoutés :
+  - `backend/tests/setup.ts`
+  - `backend/tests/auth.test.ts`
+  - `backend/tests/avis.test.ts`
+  - `backend/tests/README.md`
+
 ### 2026-04-28 - Ajout suppression avis clients admin
 
 - Ajout route DELETE /admin/avis/:id dans backend.
