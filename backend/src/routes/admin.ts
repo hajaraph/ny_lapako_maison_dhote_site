@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { hash } from 'argon2';
 import { db } from '../bdd';
 import { actualites, administrateurs, avisClients, evenements, siteSettings } from '../db/schema';
 import { asc, desc, eq } from 'drizzle-orm';
@@ -138,7 +139,7 @@ routeAdmin.patch('/profil', async (c) => {
 
     const updateData: { nom?: string; email?: string; mot_de_passe?: string } = { nom, email };
     if (mot_de_passe && mot_de_passe.trim() !== "") {
-        updateData.mot_de_passe = mot_de_passe;
+        updateData.mot_de_passe = await hash(mot_de_passe.trim());
     }
 
     await db.update(administrateurs)
@@ -178,10 +179,11 @@ routeAdmin.post('/comptes', async (c) => {
     }
 
     try {
+        const hashedPassword = await hash(motDePasse);
         await db.insert(administrateurs).values({
             nom,
             email,
-            mot_de_passe: motDePasse,
+            mot_de_passe: hashedPassword,
         }).run();
     } catch (erreur) {
         if (estErreurEmailUnique(erreur)) {
@@ -240,7 +242,7 @@ routeAdmin.patch('/comptes/:id', async (c) => {
             return c.json({ error: 'Le mot de passe doit contenir au moins 8 caractères' }, 400);
         }
 
-        updateData.mot_de_passe = motDePasse;
+        updateData.mot_de_passe = await hash(motDePasse);
     }
 
     if (Object.keys(updateData).length === 0) {

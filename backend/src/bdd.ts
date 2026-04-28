@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
+import { hash } from "argon2";
 import { DEFAULT_SITE_SETTINGS } from "./lib/siteSettings";
 import * as schema from "./db/schema";
 
@@ -11,7 +12,7 @@ export const db = drizzle(sqlite, { schema });
  * Note : La structure des tables est désormais gérée par Drizzle Kit.
  * Utilisez 'bunx drizzle-kit push' pour synchroniser le schéma avec la base SQLite.
  */
-export function initialiserTables() {
+export async function initialiserTables() {
     try {
         sqlite.exec(`
             CREATE TABLE IF NOT EXISTS site_settings (
@@ -61,15 +62,16 @@ export function initialiserTables() {
 
     // Créer un admin par défaut si la table existe et est vide
     try {
-        const verifAdmin = db.select().from(schema.administrateurs).limit(1).get();
+        const verifAdmin = await db.select().from(schema.administrateurs).limit(1).get();
         
         if (!verifAdmin) {
+            const hashedPassword = await hash("admin123");
             db.insert(schema.administrateurs).values({
                 nom: "Gestionnaire",
                 email: "admin@nylapako.fr",
-                mot_de_passe: "admin123"
+                mot_de_passe: hashedPassword
             }).run();
-            console.log("✔ Compte admin par défaut prêt.");
+            console.log("✔ Compte admin par défaut prêt (mot de passe: admin123).");
         }
     } catch (e) {
         console.log("⚠ Impossible de vérifier l'admin. Assurez-vous que les migrations sont appliquées.");

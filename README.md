@@ -6,6 +6,26 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Sécurité P0: Hashage mots de passe et JWT_SECRET
+
+- **IMPORTANT**: Les mots de passe sont désormais hashés avec Argon2. Les comptes existants en clair ne fonctionnent plus.
+- Ajout de la dépendance `argon2` pour le hashage sécurisé.
+- JWT_SECRET via variable d'environnement (`JWT_SECRET`) avec fallback aléatoire.
+- Backend modifié pour hasher les mots de passe à la création et modification :
+  - `POST /admin/comptes`
+  - `PATCH /admin/comptes/:id`
+  - `PATCH /admin/profil`
+  - `POST /auth/login` vérifie maintenant le hash
+- Admin par défaut créé avec mot de passe hashé.
+- **Action requise**: Si vous avez des comptes existants, recréez-les ou supprimez la DB SQLite.
+- Fichiers modifiés :
+  - `backend/package.json`
+  - `backend/src/config.ts`
+  - `backend/src/routes/auth.ts`
+  - `backend/src/routes/admin.ts`
+  - `backend/src/bdd.ts`
+  - `backend/index.ts`
+
 ### 2026-04-27 - CRUD actualités corrigé
 - Frontend admin actualités rendu interactif :
   - ajout d'un vrai formulaire de création,

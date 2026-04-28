@@ -52,7 +52,7 @@ app.use('/*', cors({
 }));
 
 // Initialisation de la base de données
-initialiserTables();
+await initialiserTables();
 
 // Montage des routes (Versioning ou simple préfixe)
 app.route('/auth', routeAuth);

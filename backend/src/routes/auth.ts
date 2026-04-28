@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
+import { verify } from 'argon2';
 import { db } from '../bdd';
 import { administrateurs } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -12,14 +13,16 @@ auth.post('/login', async (c) => {
 
     const admin = await db.select()
         .from(administrateurs)
-        .where(and(
-            eq(administrateurs.email, email),
-            eq(administrateurs.mot_de_passe, mot_de_passe)
-        ))
+        .where(eq(administrateurs.email, email))
         .limit(1)
         .get();
 
     if (!admin) {
+        return c.json({ error: "Identifiants invalides" }, 401);
+    }
+
+    const isValidPassword = await verify(admin.mot_de_passe, mot_de_passe).catch(() => false);
+    if (!isValidPassword) {
         return c.json({ error: "Identifiants invalides" }, 401);
     }
 
