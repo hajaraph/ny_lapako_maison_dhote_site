@@ -87,6 +87,15 @@ app.route('/site-info', routeSiteInfo);
 // Route de base pour vérifier que tout fonctionne
 app.get('/', (c) => c.text('Bienvenue sur l\'API de Ny Lapako (Opérationnelle 🚀)'));
 
+// Healthcheck endpoint pour Docker
+app.get('/health', (c) => {
+    return c.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+    }, 200);
+});
+
 export default {
     port: 3000,
     fetch: app.fetch,

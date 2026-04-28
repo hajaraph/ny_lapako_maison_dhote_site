@@ -1,80 +1,52 @@
 import path from 'node:path';
-import { mkdir, unlink } from 'node:fs/promises';
-import { UPLOADS_ROOT } from './evenementMedia';
+import {
+	enregistrerFichierUpload,
+	supprimerFichierUpload,
+	lireChaineFormData,
+	lireFichierFormData,
+	type MediaConfig,
+} from './mediaUpload';
 
+// Définir UPLOADS_ROOT localement pour éviter dépendance circulaire
+export const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads');
 export const ACTUALITE_UPLOADS_ROOT = path.join(UPLOADS_ROOT, 'actualites');
 export const ACTUALITE_UPLOADS_PUBLIC_PREFIX = '/uploads/actualites';
 
-function extensionDepuisFichier(fichier: File) {
-	const extension = path.extname(fichier.name || '').toLowerCase();
-	if (extension) {
-		return extension;
-	}
+const actualiteConfig: MediaConfig = {
+	rootDir: ACTUALITE_UPLOADS_ROOT,
+	publicPrefix: ACTUALITE_UPLOADS_PUBLIC_PREFIX,
+};
 
-	switch (fichier.type) {
-		case 'image/jpeg':
-			return '.jpg';
-		case 'image/png':
-			return '.png';
-		case 'image/webp':
-			return '.webp';
-		case 'image/gif':
-			return '.gif';
-		default:
-			return '.bin';
-	}
-}
-
-async function enregistrerFichierActualite(fichier: File | null) {
-	if (!fichier || fichier.size === 0) {
-		return null;
-	}
-
-	await mkdir(ACTUALITE_UPLOADS_ROOT, { recursive: true });
-
-	const nomFichier = `${crypto.randomUUID()}${extensionDepuisFichier(fichier)}`;
-	const cheminFichier = path.join(ACTUALITE_UPLOADS_ROOT, nomFichier);
-
-	await Bun.write(cheminFichier, fichier);
-
-	return `${ACTUALITE_UPLOADS_PUBLIC_PREFIX}/${nomFichier}`;
-}
-
-function lireChaine(valeur: FormDataEntryValue | null) {
-	return typeof valeur === 'string' ? valeur.trim() : '';
-}
-
-function lireFichier(valeur: FormDataEntryValue | null) {
-	if (!valeur || typeof valeur === 'string') {
-		return null;
-	}
-
-	return valeur.size > 0 ? valeur : null;
-}
-
-export async function lireActualiteDepuisRequete(c: {
+interface RequestContext {
 	req: {
 		header: (name: string) => string | undefined;
 		formData: () => Promise<FormData>;
 		json: () => Promise<any>;
 	};
-}, imageExistante = '') {
+}
+
+export async function lireActualiteDepuisRequete(c: RequestContext, imageExistante = '') {
 	const contentType = c.req.header('content-type') || '';
 
 	if (contentType.includes('multipart/form-data')) {
 		const formData = await c.req.formData();
-		const fichier = lireFichier(formData.get('image'));
-		const imageTelechargee = await enregistrerFichierActualite(fichier);
+		const fichier = lireFichierFormData(formData.get('image'));
+		const uploadResult = await enregistrerFichierUpload(fichier, actualiteConfig, imageExistante);
+
+		// En cas d'erreur de validation, on lance une erreur avec le message
+		if (uploadResult.error) {
+			throw new Error(uploadResult.error);
+		}
 
 		return {
 			actualite: {
-				titre: lireChaine(formData.get('titre')),
-				contenu: lireChaine(formData.get('contenu')),
-				date_publication: lireChaine(formData.get('date_publication')),
-				image_url: imageTelechargee || imageExistante || '',
-				statut: lireChaine(formData.get('statut')) || 'brouillon',
+				titre: lireChaineFormData(formData.get('titre')),
+				contenu: lireChaineFormData(formData.get('contenu')),
+				date_publication: lireChaineFormData(formData.get('date_publication')),
+				image_url: uploadResult.url || imageExistante || '',
+				statut: lireChaineFormData(formData.get('statut')) || 'brouillon',
 			},
-			imageRemplacee: imageTelechargee ? imageExistante : null,
+			imageRemplacee: uploadResult.imageRemplacee,
 		};
 	}
 
@@ -93,21 +65,5 @@ export async function lireActualiteDepuisRequete(c: {
 }
 
 export async function supprimerImageActualiteLocale(imageUrl?: string | null) {
-	if (!imageUrl || !imageUrl.startsWith(ACTUALITE_UPLOADS_PUBLIC_PREFIX)) {
-		return;
-	}
-
-	const cheminRelatif = imageUrl.replace(/^\/+/, '');
-	const cheminAbsolu = path.resolve(process.cwd(), cheminRelatif);
-	const relatifAuRoot = path.relative(UPLOADS_ROOT, cheminAbsolu);
-
-	if (relatifAuRoot.startsWith('..') || path.isAbsolute(relatifAuRoot)) {
-		return;
-	}
-
-	try {
-		await unlink(cheminAbsolu);
-	} catch {
-		// Le fichier peut déjà avoir été supprimé; on ignore silencieusement.
-	}
+	await supprimerFichierUpload(imageUrl, actualiteConfig);
 }

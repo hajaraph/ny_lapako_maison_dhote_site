@@ -48,7 +48,7 @@ routeAvis.post('/', async (c) => {
             date_sejour: dateSejour,
         }).run();
     } catch (error) {
-        if (typeof error?.message === 'string' && error.message.includes('500 caractères')) {
+        if (error instanceof Error && typeof error.message === 'string' && error.message.includes('500 caractères')) {
             return c.json({ error: COMMENTAIRE_TROP_LONG }, 400);
         }
 

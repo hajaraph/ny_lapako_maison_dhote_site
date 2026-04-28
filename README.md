@@ -6,6 +6,56 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Corrections diverses
+
+- Suppression volume `backend-data` inutile dans docker-compose.yml (le code est dans l'image Docker).
+- Validation du titre ajoutée sur POST `/evenements` (cohérence avec actualités).
+- Sanitization HTML ajoutée sur routes admin :
+  - POST/PATCH `/admin/actualites` - sanitisation de titre et contenu
+  - POST/PATCH `/admin/evenements` - sanitisation de titre et description
+  - Utilise `sanitize-html` avec configuration permissive (formatage de base autorisé)
+  - Prévient XSS depuis le panneau admin
+- Correction erreur TypeScript dans `avis.ts` (type guard sur Error).
+- Fichiers modifiés :
+  - `docker-compose.yml`
+  - `backend/src/routes/evenements.ts`
+  - `backend/src/routes/admin.ts`
+  - `backend/src/routes/avis.ts`
+  - `backend/package.json` (ajout sanitize-html et @types/sanitize-html)
+
+### 2026-04-28 - DevOps P3: Healthchecks Docker
+
+- Ajout endpoint `/health` dans le backend :
+  - Retourne status, timestamp et uptime
+  - Utilisé par Docker pour vérifier la santé du service
+- Healthchecks configurés dans docker-compose.yml :
+  - Backend: vérifie `/health` toutes les 30s (3 retries, timeout 10s)
+  - Frontend: vérifie `/` toutes les 30s (3 retries, timeout 10s)
+  - `depends_on` frontend modifié pour attendre que backend soit healthy
+  - `start_period` configuré pour donner le temps aux services de démarrer
+- Fichiers modifiés :
+  - `backend/index.ts`
+  - `docker-compose.yml`
+
+### 2026-04-28 - Qualité P2: Validation fichiers uploadés et Refactor duplication
+
+- Validation sécurisée des fichiers images uploadés :
+  - Vérification des magic numbers (bytes signatures) pour détecter le vrai type
+  - Protection contre les fichiers renommés (ex: .php en .jpg)
+  - Limite de taille: 10MB par défaut
+  - Types acceptés: JPEG, PNG, WebP, GIF
+- Refactor duplication code upload médias :
+  - Création de `lib/fileValidation.ts` (validation par magic numbers)
+  - Création de `lib/mediaUpload.ts` (logique commune upload/suppression)
+  - `actualiteMedia.ts` et `evenementMedia.ts` refactorisés pour utiliser la lib commune
+  - Suppression dépendance circulaire entre fichiers media
+- Fichiers ajoutés :
+  - `backend/src/lib/fileValidation.ts`
+  - `backend/src/lib/mediaUpload.ts`
+- Fichiers modifiés :
+  - `backend/src/lib/actualiteMedia.ts`
+  - `backend/src/lib/evenementMedia.ts`
+
 ### 2026-04-28 - Sécurité P1: CORS restrictif et Rate limiting
 
 - CORS restreint aux origins autorisées via `ALLOWED_ORIGINS` (env var) :

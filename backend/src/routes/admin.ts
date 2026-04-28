@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { hash } from 'argon2';
+import sanitizeHtml from 'sanitize-html';
 import { db } from '../bdd';
 import { actualites, administrateurs, avisClients, evenements, siteSettings } from '../db/schema';
 import { asc, desc, eq } from 'drizzle-orm';
@@ -46,6 +47,24 @@ function emailValide(email: string) {
 
 function estErreurEmailUnique(erreur: unknown) {
     return erreur instanceof Error && erreur.message.includes('UNIQUE constraint failed: administrateurs.email');
+}
+
+/**
+ * Sanitize HTML pour prévenir XSS
+ * Configuration permissive pour l'admin (autorise formatage de base)
+ */
+function sanitiserHtml(texte: string): string {
+    if (!texte) return '';
+
+    return sanitizeHtml(texte, {
+        allowedTags: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'a', 'span'],
+        allowedAttributes: {
+            'a': ['href', 'target'],
+            'span': ['class']
+        },
+        allowedSchemes: ['http', 'https'],
+        selfClosing: ['br'],
+    });
 }
 
 routeAdmin.get('/stats', async (c) => {
@@ -314,8 +333,8 @@ routeAdmin.post('/actualites', async (c) => {
     }
 
     await db.insert(actualites).values({
-        titre: actualite.titre,
-        contenu: actualite.contenu,
+        titre: sanitiserHtml(actualite.titre),
+        contenu: sanitiserHtml(actualite.contenu || ''),
         image_url: actualite.image_url,
         date_publication: actualite.date_publication,
         statut: actualite.statut
@@ -346,8 +365,16 @@ routeAdmin.patch('/actualites/:id', async (c) => {
         return c.json({ error: 'Le titre est requis' }, 400);
     }
 
+    const actualiteSanitisee = {
+        titre: sanitiserHtml(actualite.titre),
+        contenu: actualite.contenu ? sanitiserHtml(actualite.contenu) : undefined,
+        image_url: actualite.image_url,
+        date_publication: actualite.date_publication,
+        statut: actualite.statut,
+    };
+
     await db.update(actualites)
-        .set(actualite)
+        .set(actualiteSanitisee)
         .where(eq(actualites.id, id))
         .run();
 
@@ -384,8 +411,8 @@ routeAdmin.get('/evenements', async (c) => {
 routeAdmin.post('/evenements', async (c) => {
     const { evenement } = await lireEvenementDepuisRequete(c);
     await db.insert(evenements).values({
-        titre: evenement.titre,
-        description: evenement.description,
+        titre: sanitiserHtml(evenement.titre),
+        description: sanitiserHtml(evenement.description || ''),
         date_evenement: evenement.date_evenement,
         image_url: evenement.image_url,
         statut: evenement.statut
@@ -410,8 +437,8 @@ routeAdmin.patch('/evenements/:id', async (c) => {
 
     await db.update(evenements)
         .set({
-            titre: evenement.titre,
-            description: evenement.description,
+            titre: sanitiserHtml(evenement.titre),
+            description: evenement.description ? sanitiserHtml(evenement.description) : undefined,
             date_evenement: evenement.date_evenement,
             image_url: evenement.image_url,
             statut: evenement.statut,

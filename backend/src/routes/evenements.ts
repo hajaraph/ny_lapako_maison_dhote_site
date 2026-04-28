@@ -14,8 +14,13 @@ routeEvenements.get('/', async (c) => {
 
 routeEvenements.post('/', adminAuth, async (c) => {
     const { evenement } = await lireEvenementDepuisRequete(c);
+
+    if (!evenement.titre || evenement.titre.trim().length === 0) {
+        return c.json({ error: "Le titre est requis" }, 400);
+    }
+
     await db.insert(evenements).values({
-        titre: evenement.titre,
+        titre: evenement.titre.trim(),
         description: evenement.description,
         date_evenement: evenement.date_evenement,
         image_url: evenement.image_url,

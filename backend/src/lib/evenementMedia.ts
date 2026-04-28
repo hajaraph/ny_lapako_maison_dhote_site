@@ -1,80 +1,51 @@
 import path from 'node:path';
-import { mkdir, unlink } from 'node:fs/promises';
+import {
+	enregistrerFichierUpload,
+	supprimerFichierUpload,
+	lireChaineFormData,
+	lireFichierFormData,
+	type MediaConfig,
+} from './mediaUpload';
 
 export const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads');
 export const EVENT_UPLOADS_ROOT = path.join(UPLOADS_ROOT, 'evenements');
 export const EVENT_UPLOADS_PUBLIC_PREFIX = '/uploads/evenements';
 
-function extensionDepuisFichier(fichier: File) {
-	const extension = path.extname(fichier.name || '').toLowerCase();
-	if (extension) {
-		return extension;
-	}
+const eventConfig: MediaConfig = {
+	rootDir: EVENT_UPLOADS_ROOT,
+	publicPrefix: EVENT_UPLOADS_PUBLIC_PREFIX,
+};
 
-	switch (fichier.type) {
-		case 'image/jpeg':
-			return '.jpg';
-		case 'image/png':
-			return '.png';
-		case 'image/webp':
-			return '.webp';
-		case 'image/gif':
-			return '.gif';
-		default:
-			return '.bin';
-	}
-}
-
-async function enregistrerFichierEvenement(fichier: File | null) {
-	if (!fichier || fichier.size === 0) {
-		return null;
-	}
-
-	await mkdir(EVENT_UPLOADS_ROOT, { recursive: true });
-
-	const nomFichier = `${crypto.randomUUID()}${extensionDepuisFichier(fichier)}`;
-	const cheminFichier = path.join(EVENT_UPLOADS_ROOT, nomFichier);
-
-	await Bun.write(cheminFichier, fichier);
-
-	return `${EVENT_UPLOADS_PUBLIC_PREFIX}/${nomFichier}`;
-}
-
-function lireChaine(valeur: FormDataEntryValue | null) {
-	return typeof valeur === 'string' ? valeur.trim() : '';
-}
-
-function lireFichier(valeur: FormDataEntryValue | null) {
-	if (!valeur || typeof valeur === 'string') {
-		return null;
-	}
-
-	return valeur.size > 0 ? valeur : null;
-}
-
-export async function lireEvenementDepuisRequete(c: {
+interface RequestContext {
 	req: {
 		header: (name: string) => string | undefined;
 		formData: () => Promise<FormData>;
 		json: () => Promise<any>;
 	};
-}, imageExistante = '') {
+}
+
+export async function lireEvenementDepuisRequete(c: RequestContext, imageExistante = '') {
 	const contentType = c.req.header('content-type') || '';
 
 	if (contentType.includes('multipart/form-data')) {
 		const formData = await c.req.formData();
-		const fichier = lireFichier(formData.get('image'));
-		const imageTelechargee = await enregistrerFichierEvenement(fichier);
+		const fichier = lireFichierFormData(formData.get('image'));
+		const uploadResult = await enregistrerFichierUpload(fichier, eventConfig, imageExistante);
+
+		// En cas d'erreur de validation, on lance une erreur avec le message
+		if (uploadResult.error) {
+			throw new Error(uploadResult.error);
+		}
 
 		return {
 			evenement: {
-				titre: lireChaine(formData.get('titre')),
-				description: lireChaine(formData.get('description')),
-				date_evenement: lireChaine(formData.get('date_evenement')),
-				image_url: imageTelechargee || lireChaine(formData.get('image_url')) || imageExistante || '',
-				statut: lireChaine(formData.get('statut')) || 'planifie',
+				titre: lireChaineFormData(formData.get('titre')),
+				description: lireChaineFormData(formData.get('description')),
+				date_evenement: lireChaineFormData(formData.get('date_evenement')),
+				image_url: uploadResult.url || lireChaineFormData(formData.get('image_url')) || imageExistante || '',
+				statut: lireChaineFormData(formData.get('statut')) || 'planifie',
 			},
-			imageRemplacee: imageTelechargee ? imageExistante : null,
+			imageRemplacee: uploadResult.imageRemplacee,
 		};
 	}
 
@@ -93,21 +64,5 @@ export async function lireEvenementDepuisRequete(c: {
 }
 
 export async function supprimerImageLocale(imageUrl?: string | null) {
-	if (!imageUrl || !imageUrl.startsWith(EVENT_UPLOADS_PUBLIC_PREFIX)) {
-		return;
-	}
-
-	const cheminRelatif = imageUrl.replace(/^\/+/, '');
-	const cheminAbsolu = path.resolve(process.cwd(), cheminRelatif);
-	const relatifAuRoot = path.relative(UPLOADS_ROOT, cheminAbsolu);
-
-	if (relatifAuRoot.startsWith('..') || path.isAbsolute(relatifAuRoot)) {
-		return;
-	}
-
-	try {
-		await unlink(cheminAbsolu);
-	} catch {
-		// Le fichier peut déjà avoir été supprimé; on ignore silencieusement.
-	}
+	await supprimerFichierUpload(imageUrl, eventConfig);
 }
