@@ -14,6 +14,15 @@ import {
 	fusionnerSiteSettings,
 	normaliserSiteSettingsPayload,
 } from '../lib/siteSettings';
+import {
+	adminCreateSchema,
+	adminUpdateSchema,
+	siteSettingsSchema,
+	type AdminCreateInput,
+	type AdminUpdateInput,
+	type SiteSettingsInput,
+} from '../lib/validation';
+import { validate, getValidated } from '../middleware/validate';
 
 const routeAdmin = new Hono();
 
@@ -108,26 +117,21 @@ routeAdmin.get('/site-info', async (c) => {
     return c.json(formaterSiteSettingsResponse(siteInfo ?? null));
 });
 
-routeAdmin.patch('/site-info', async (c) => {
-    const corps = await c.req.json();
-    const payload = normaliserSiteSettingsPayload(corps);
-
-    if (!payload) {
-        return c.json({ error: 'Au moins une information valide est requise' }, 400);
-    }
-
+routeAdmin.patch('/site-info', validate(siteSettingsSchema), async (c) => {
+    const payload = getValidated<SiteSettingsInput>(c);
     const siteInfoActuel = await db.select().from(siteSettings).limit(1).get();
-    const siteInfoFusionne = fusionnerSiteSettings(siteInfoActuel ?? null, payload);
+    
+    // Fusionner avec les données existantes si présentes
+    const siteInfoFusionne: any = siteInfoActuel 
+        ? { ...siteInfoActuel, ...payload }
+        : { ...payload };
 
+    // Validations additionnelles qui dépendent de la fusion
     if (!siteInfoFusionne.address || !siteInfoFusionne.contact_phone || !siteInfoFusionne.contact_whatsapp || !siteInfoFusionne.contact_email) {
         return c.json({ error: 'Adresse, téléphone, WhatsApp et email sont requis' }, 400);
     }
 
-    if (!estEmailValide(siteInfoFusionne.contact_email)) {
-        return c.json({ error: 'Adresse email de contact invalide' }, 400);
-    }
-
-    if (!estUrlValide(siteInfoFusionne.copyright_url)) {
+    if (!estUrlValide(siteInfoFusionne.copyright_url || '')) {
         return c.json({ error: 'Lien de copyright invalide' }, 400);
     }
 
@@ -179,29 +183,15 @@ routeAdmin.get('/comptes', async (c) => {
     return c.json(comptes);
 });
 
-routeAdmin.post('/comptes', async (c) => {
-    const corps = await c.req.json();
-    const nom = normaliserTexte(corps?.nom);
-    const email = normaliserTexte(corps?.email).toLowerCase();
-    const motDePasse = normaliserTexte(corps?.mot_de_passe);
-
-    if (!nom || !email || !motDePasse) {
-        return c.json({ error: 'Nom, email et mot de passe sont requis' }, 400);
-    }
-
-    if (!emailValide(email)) {
-        return c.json({ error: 'Adresse email invalide' }, 400);
-    }
-
-    if (motDePasse.length < 8) {
-        return c.json({ error: 'Le mot de passe doit contenir au moins 8 caractères' }, 400);
-    }
+routeAdmin.post('/comptes', validate(adminCreateSchema), async (c) => {
+    const { nom, email, mot_de_passe } = getValidated<AdminCreateInput>(c);
+    const emailLower = email.toLowerCase();
 
     try {
-        const hashedPassword = await hash(motDePasse);
+        const hashedPassword = await hash(mot_de_passe);
         await db.insert(administrateurs).values({
             nom,
-            email,
+            email: emailLower,
             mot_de_passe: hashedPassword,
         }).run();
     } catch (erreur) {
@@ -215,7 +205,7 @@ routeAdmin.post('/comptes', async (c) => {
     return c.json({ message: 'Compte administrateur créé' }, 201);
 });
 
-routeAdmin.patch('/comptes/:id', async (c) => {
+routeAdmin.patch('/comptes/:id', validate(adminUpdateSchema), async (c) => {
     const id = Number(c.req.param('id'));
 
     if (!Number.isFinite(id)) {
@@ -232,45 +222,16 @@ routeAdmin.patch('/comptes/:id', async (c) => {
         return c.json({ error: 'Compte introuvable' }, 404);
     }
 
-    const corps = await c.req.json();
-    const updateData: { nom?: string; email?: string; mot_de_passe?: string } = {};
+    const updateData = getValidated<AdminUpdateInput>(c);
+    const dbUpdate: any = {};
 
-    if (corps?.nom !== undefined) {
-        const nom = normaliserTexte(corps.nom);
-        if (!nom) {
-            return c.json({ error: 'Le nom ne peut pas être vide' }, 400);
-        }
-        updateData.nom = nom;
-    }
-
-    if (corps?.email !== undefined) {
-        const email = normaliserTexte(corps.email).toLowerCase();
-        if (!email || !emailValide(email)) {
-            return c.json({ error: 'Adresse email invalide' }, 400);
-        }
-        updateData.email = email;
-    }
-
-    if (corps?.mot_de_passe !== undefined) {
-        const motDePasse = normaliserTexte(corps.mot_de_passe);
-        if (!motDePasse) {
-            return c.json({ error: 'Le mot de passe ne peut pas être vide' }, 400);
-        }
-
-        if (motDePasse.length < 8) {
-            return c.json({ error: 'Le mot de passe doit contenir au moins 8 caractères' }, 400);
-        }
-
-        updateData.mot_de_passe = await hash(motDePasse);
-    }
-
-    if (Object.keys(updateData).length === 0) {
-        return c.json({ error: 'Aucune donnée à mettre à jour' }, 400);
-    }
+    if (updateData.nom !== undefined) dbUpdate.nom = updateData.nom;
+    if (updateData.email !== undefined) dbUpdate.email = updateData.email.toLowerCase();
+    if (updateData.mot_de_passe !== undefined) dbUpdate.mot_de_passe = await hash(updateData.mot_de_passe);
 
     try {
         await db.update(administrateurs)
-            .set(updateData)
+            .set(dbUpdate)
             .where(eq(administrateurs.id, id))
             .run();
     } catch (erreur) {
