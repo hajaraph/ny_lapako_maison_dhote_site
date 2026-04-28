@@ -123,11 +123,11 @@ export const api = {
 		supprimer: (id) => requete(`/actualites/${id}`, 'DELETE', null, { auth: true }),
 	},
 	evenements: {
-		lister: () => requete('/evenements'),
+		lister: (page = 1, limit = 20) => requete(`/evenements?page=${page}&limit=${limit}`),
 		creer: (data) => requete('/evenements', 'POST', data, { auth: true }),
 	},
 	avis: {
-		lister: () => requete('/avis'),
+		lister: (page = 1, limit = 20) => requete(`/avis?page=${page}&limit=${limit}`),
 		soumettre: (data) => requete('/avis', 'POST', data),
 		moderer: (id, statut) => requete(`/avis/${id}/statut`, 'PATCH', { statut }, { auth: true }),
 	},
@@ -146,19 +146,19 @@ export const api = {
 			supprimer: (id) => requete(`/admin/comptes/${id}`, 'DELETE', null, { auth: true }),
 		},
 	actualites: {
-		lister: () => requete('/admin/actualites', 'GET', null, { auth: true }),
+		lister: (page = 1, limit = 20) => requete(`/admin/actualites?page=${page}&limit=${limit}`, 'GET', null, { auth: true }),
 		creer: (data) => requete('/admin/actualites', 'POST', data, { auth: true }),
 		mettreAJour: (id, data) => requete(`/admin/actualites/${id}`, 'PATCH', data, { auth: true }),
 		supprimer: (id) => requete(`/admin/actualites/${id}`, 'DELETE', null, { auth: true }),
 	},
 		evenements: {
-			lister: () => requete('/admin/evenements', 'GET', null, { auth: true }),
+			lister: (page = 1, limit = 20) => requete(`/admin/evenements?page=${page}&limit=${limit}`, 'GET', null, { auth: true }),
 			creer: (data) => requete('/admin/evenements', 'POST', data, { auth: true }),
 			mettreAJour: (id, data) => requete(`/admin/evenements/${id}`, 'PATCH', data, { auth: true }),
 			supprimer: (id) => requete(`/admin/evenements/${id}`, 'DELETE', null, { auth: true }),
 		},
 		avis: {
-			lister: () => requete('/admin/avis', 'GET', null, { auth: true }),
+			lister: (page = 1, limit = 20) => requete(`/admin/avis?page=${page}&limit=${limit}`, 'GET', null, { auth: true }),
 			moderer: (id, statut) => requete(`/admin/avis/${id}/statut`, 'PATCH', { statut }, { auth: true }),
 			supprimer: (id) => requete(`/admin/avis/${id}`, 'DELETE', null, { auth: true }),
 		},
