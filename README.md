@@ -6,6 +6,28 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Validation Zod sur toutes les routes
+
+- Ajout `zod` pour validation déclarative robuste.
+- Création `src/lib/validation.ts` avec schémas pour toutes les entités :
+  - `adminCreateSchema`, `adminUpdateSchema` (comptes admin)
+  - `actualiteSchema`, `evenementSchema` (news/events)
+  - `avisClientSchema`, `avisModerationSchema` (avis clients)
+  - `siteSettingsSchema` (paramètres site)
+  - `loginSchema` (authentification)
+- Création middleware `validate.ts` pour intégration Hono.
+- Remplacement validations manuelles par Zod dans :
+  - `auth.ts` (login)
+  - `avis.ts` (POST avis, PATCH statut)
+  - `admin.ts` (comptes, site-info)
+- Format d'erreur uniforme : `{ error: "Validation échouée", details: [...] }`
+- Fichiers ajoutés/modifiés :
+  - `backend/src/lib/validation.ts`
+  - `backend/src/middleware/validate.ts`
+  - `backend/src/routes/auth.ts`
+  - `backend/src/routes/avis.ts`
+  - `backend/src/routes/admin.ts`
+
 ### 2026-04-28 - Tests unitaires backend (structure initiale)
 
 - Création dossier `backend/tests/` avec configuration de test.
