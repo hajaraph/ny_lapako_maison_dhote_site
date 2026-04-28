@@ -441,7 +441,15 @@ routeAdmin.delete('/evenements/:id', async (c) => {
         .limit(1)
         .get();
 
-    await db.delete(evenements).where(eq(evenements.id, id)).run();
+    if (!evenementExistant) {
+        return c.json({ error: 'Événement introuvable' }, 404);
+    }
+
+    // Soft delete
+    await db.update(evenements)
+        .set({ deleted_at: Math.floor(Date.now() / 1000) })
+        .where(eq(evenements.id, id))
+        .run();
 
     await supprimerImageLocale(evenementExistant?.image_url ?? '');
 
