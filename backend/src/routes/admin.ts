@@ -8,11 +8,8 @@ import { adminAuth } from '../middleware/adminAuth';
 import { lireActualiteDepuisRequete, supprimerImageActualiteLocale } from '../lib/actualiteMedia';
 import { lireEvenementDepuisRequete, supprimerImageLocale } from '../lib/evenementMedia';
 import {
-	estEmailValide,
 	estUrlValide,
 	formaterSiteSettingsResponse,
-	fusionnerSiteSettings,
-	normaliserSiteSettingsPayload,
 } from '../lib/siteSettings';
 import {
 	adminCreateSchema,
