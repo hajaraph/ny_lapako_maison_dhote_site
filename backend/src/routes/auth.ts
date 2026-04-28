@@ -3,21 +3,15 @@ import { sign } from 'hono/jwt';
 import { verify } from 'argon2';
 import { db } from '../bdd';
 import { administrateurs } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { JWT_ALG, JWT_SECRET } from '../config';
+import { loginSchema, type LoginInput } from '../lib/validation';
+import { validate, getValidated } from '../middleware/validate';
 
 const auth = new Hono();
 
-auth.post('/login', async (c) => {
-    let email, mot_de_passe;
-    
-    try {
-        const body = await c.req.json();
-        email = body.email;
-        mot_de_passe = body.mot_de_passe;
-    } catch {
-        return c.json({ error: "Corps JSON invalide" }, 400);
-    }
+auth.post('/login', validate(loginSchema), async (c) => {
+    const { email, mot_de_passe } = getValidated<LoginInput>(c);
 
     const admin = await db.select()
         .from(administrateurs)

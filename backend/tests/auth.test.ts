@@ -105,6 +105,9 @@ describe("Auth Routes", () => {
             
             const res = await app.fetch(req);
             expect(res.status).toBe(400);
+            
+            const data: any = await res.json();
+            expect(data.error).toBeDefined(); // Zod retourne "Validation échouée" ou erreur parsing
         });
     });
 });
