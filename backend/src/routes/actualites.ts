@@ -1,15 +1,28 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
 import { actualites } from '../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, count } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { lireActualiteDepuisRequete, supprimerImageActualiteLocale } from '../lib/actualiteMedia';
+import { getPaginationParams, getOffset, createPaginatedResult } from '../lib/pagination';
 
 const routeActualites = new Hono();
 
 routeActualites.get('/', async (c) => {
-    const data = await db.select().from(actualites).orderBy(desc(actualites.id)).all();
-    return c.json(data);
+    const { page, limit } = getPaginationParams(c.req.url);
+    const offset = getOffset(page, limit);
+    
+    const countResult = await db.select({ value: count() }).from(actualites);
+    const total = countResult[0]?.value ?? 0;
+    
+    const data = await db.select()
+        .from(actualites)
+        .orderBy(desc(actualites.id))
+        .limit(limit)
+        .offset(offset)
+        .all();
+    
+    return c.json(createPaginatedResult(data, total, { page, limit }));
 });
 
 routeActualites.post('/', adminAuth, async (c) => {

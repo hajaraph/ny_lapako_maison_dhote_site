@@ -52,16 +52,20 @@ describe("Avis Routes", () => {
     });
     
     describe("GET /avis", () => {
-        it("devrait retourner la liste des avis", async () => {
+        it("devrait retourner la liste des avis paginée", async () => {
             const req = new Request("http://localhost/avis");
             const res = await app.fetch(req);
             
             expect(res.status).toBe(200);
             
-            const data = await res.json() as any[];
-            expect(data.length).toBe(2);
-            expect(data[0].nom_client).toBe("Marie Martin"); // Ordre desc
-            expect(data[1].nom_client).toBe("Jean Dupont");
+            const result = await res.json() as any;
+            expect(result.data).toBeDefined();
+            expect(result.pagination).toBeDefined();
+            expect(result.data.length).toBe(2);
+            expect(result.pagination.total).toBe(2);
+            expect(result.pagination.page).toBe(1);
+            expect(result.data[0].nom_client).toBe("Marie Martin"); // Ordre desc
+            expect(result.data[1].nom_client).toBe("Jean Dupont");
         });
     });
     

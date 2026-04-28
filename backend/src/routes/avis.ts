@@ -1,16 +1,31 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
 import { avisClients } from '../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, count } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { avisClientSchema, avisModerationSchema, type AvisClientInput, type AvisModerationInput } from '../lib/validation';
 import { validate, getValidated } from '../middleware/validate';
+import { getPaginationParams, getOffset, createPaginatedResult } from '../lib/pagination';
 
 const routeAvis = new Hono();
 
 routeAvis.get('/', async (c) => {
-    const data = await db.select().from(avisClients).orderBy(desc(avisClients.id)).all();
-    return c.json(data);
+    const { page, limit } = getPaginationParams(c.req.url);
+    const offset = getOffset(page, limit);
+    
+    // Récupérer le total pour la pagination
+    const countResult = await db.select({ value: count() }).from(avisClients);
+    const total = countResult[0]?.value ?? 0;
+    
+    // Récupérer les données paginées
+    const data = await db.select()
+        .from(avisClients)
+        .orderBy(desc(avisClients.id))
+        .limit(limit)
+        .offset(offset)
+        .all();
+    
+    return c.json(createPaginatedResult(data, total, { page, limit }));
 });
 
 routeAvis.post('/', validate(avisClientSchema), async (c) => {
