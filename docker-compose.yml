@@ -3,6 +3,7 @@ networks:
 
 services:
   backend:
+    container_name: ny_lapako_backend
     build:
       context: .
       target: backend
@@ -15,6 +16,7 @@ services:
       - webapp_preprod
 
   frontend:
+    container_name: ny_lapako_frontend
     build:
       context: .
       target: frontend-nginx
