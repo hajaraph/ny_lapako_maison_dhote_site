@@ -160,6 +160,7 @@ export const api = {
 		avis: {
 			lister: () => requete('/admin/avis', 'GET', null, { auth: true }),
 			moderer: (id, statut) => requete(`/admin/avis/${id}/statut`, 'PATCH', { statut }, { auth: true }),
+			supprimer: (id) => requete(`/admin/avis/${id}`, 'DELETE', null, { auth: true }),
 		},
 	},
 };

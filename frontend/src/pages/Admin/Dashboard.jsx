@@ -149,7 +149,24 @@ export function AdminDashboard() {
 				route('/login');
 				return;
 			}
-			alert('Erreur modération');
+		}
+	};
+
+	const supprimerAvis = async (id) => {
+		if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis ?')) {
+			return;
+		}
+		try {
+			await api.admin.avis.supprimer(id);
+			setDonnees(donnees.filter((item) => item.id !== id));
+			rafraichir();
+		} catch (error) {
+			console.error('Erreur suppression:', error);
+			if (error?.status === 401) {
+				clearAuthToken();
+				route('/login');
+				return;
+			}
 		}
 	};
 
@@ -259,7 +276,7 @@ export function AdminDashboard() {
 									/>
 								)}
 								{currentTab === 'events' && <EventsManager data={donnees} onRefresh={rafraichir} />}
-								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} />}
+								{currentTab === 'reviews' && <ReviewsManager data={donnees} onModerer={modererAvis} onSupprimer={supprimerAvis} />}
 								{currentTab === 'accounts' && (
 									<AccountsManager
 										data={donnees}
@@ -1039,7 +1056,7 @@ function formatEventStatus(statut) {
 	}
 }
 
-function ReviewsManager({ data, onModerer }) {
+function ReviewsManager({ data, onModerer, onSupprimer }) {
 	const pagination = usePagination(data, 4);
 
 	return (
@@ -1094,6 +1111,13 @@ function ReviewsManager({ data, onModerer }) {
 										class="text-[10px] font-black uppercase tracking-[0.3em] text-outline transition-colors hover:text-on-surface"
 									>
 										Mettre en attente
+									</button>
+									<button
+										type="button"
+										onClick={() => onSupprimer(review.id)}
+										class="text-[10px] font-black uppercase tracking-[0.3em] text-red-600 transition-colors hover:text-red-800"
+									>
+										Supprimer
 									</button>
 								</div>
 							</div>

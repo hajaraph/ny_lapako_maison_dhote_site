@@ -493,4 +493,17 @@ routeAdmin.patch('/avis/:id/statut', async (c) => {
     return c.json({ message: "Statut mis à jour" });
 });
 
+routeAdmin.delete('/avis/:id', async (c) => {
+    const id = Number(c.req.param('id'));
+
+    if (!Number.isFinite(id)) {
+        return c.json({ error: 'Identifiant invalide' }, 400);
+    }
+
+    await db.delete(avisClients)
+        .where(eq(avisClients.id, id))
+        .run();
+    return c.json({ message: "Avis supprimé" });
+});
+
 export default routeAdmin;
