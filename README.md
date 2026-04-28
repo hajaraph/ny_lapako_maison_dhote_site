@@ -6,6 +6,56 @@ Ce document décrit l'organisation et les technologies utilisées dans le projet
 
 Ce journal doit être mis à jour à chaque changement important pour garder une trace claire de la dernière évolution livrée.
 
+### 2026-04-28 - Soft Delete pour actualites, evenements, avis
+
+- Ajout colonne `deleted_at` dans schema Drizzle (actualites, evenements, avis, administrateurs).
+- Modification toutes les requêtes GET pour filtrer `deleted_at IS NULL` (exclure les supprimés).
+- Remplacement DELETE par soft delete : `UPDATE SET deleted_at = now()` au lieu de suppression définitive.
+- Routes modifiées : `/actualites`, `/evenements`, `/avis` (public et admin).
+- Création `lib/softDelete.ts` avec utilitaires de filtre.
+- Avantages : récupération possible des données supprimées, audit trail conservé.
+- Fichiers ajoutés/modifiés :
+  - `backend/src/db/schema.ts`
+  - `backend/src/lib/softDelete.ts`
+  - `backend/src/routes/actualites.ts`
+  - `backend/src/routes/evenements.ts`
+  - `backend/src/routes/avis.ts`
+  - `backend/src/routes/admin.ts`
+  - `backend/tests/setup.ts`
+
+### 2026-04-28 - Logs structurés avec Pino
+
+- Installation `pino` et `pino-pretty` pour logs structurés.
+- Création `lib/logger.ts` avec 3 loggers contextuels :
+  - `logger` - Logger principal
+  - `httpLogger` - Requêtes HTTP (method, path, status, duration)
+  - `dbLogger` - Opérations base de données
+  - `errorLogger` - Erreurs avec contexte
+- Remplacement `console.log` par logger dans `index.ts` et `bdd.ts`.
+- Middleware HTTP logger pour toutes les requêtes.
+- Format : JSON en production, pretty avec couleurs en développement.
+- Fichiers ajoutés/modifiés :
+  - `backend/src/lib/logger.ts`
+  - `backend/index.ts`
+  - `backend/src/bdd.ts`
+  - `backend/package.json`
+
+### 2026-04-28 - Pagination backend
+
+- Création `lib/pagination.ts` avec utilitaires de pagination.
+- Modification routes GET pour supporter `?page=1&limit=20`.
+- Format de réponse standardisé : `{ data, pagination }`.
+- Pagination inclut : page, limit, total, totalPages, hasNextPage, hasPrevPage.
+- Routes modifiées : `/avis`, `/actualites`, `/evenements`.
+- API frontend mise à jour pour passer les paramètres page/limit.
+- Fichiers ajoutés/modifiés :
+  - `backend/src/lib/pagination.ts`
+  - `backend/src/routes/avis.ts`
+  - `backend/src/routes/actualites.ts`
+  - `backend/src/routes/evenements.ts`
+  - `backend/tests/avis.test.ts`
+  - `frontend/src/api.js`
+
 ### 2026-04-28 - Validation Zod sur toutes les routes
 
 - Ajout `zod` pour validation déclarative robuste.
