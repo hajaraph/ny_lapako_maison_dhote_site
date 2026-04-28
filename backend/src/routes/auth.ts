@@ -9,7 +9,15 @@ import { JWT_ALG, JWT_SECRET } from '../config';
 const auth = new Hono();
 
 auth.post('/login', async (c) => {
-    const { email, mot_de_passe } = await c.req.json();
+    let email, mot_de_passe;
+    
+    try {
+        const body = await c.req.json();
+        email = body.email;
+        mot_de_passe = body.mot_de_passe;
+    } catch {
+        return c.json({ error: "Corps JSON invalide" }, 400);
+    }
 
     const admin = await db.select()
         .from(administrateurs)
