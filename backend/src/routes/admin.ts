@@ -457,7 +457,11 @@ routeAdmin.delete('/evenements/:id', async (c) => {
 });
 
 routeAdmin.get('/avis', async (c) => {
-    const data = await db.select().from(avisClients).orderBy(desc(avisClients.id)).all();
+    const data = await db.select()
+        .from(avisClients)
+        .where(isNull(avisClients.deleted_at))
+        .orderBy(desc(avisClients.id))
+        .all();
     return c.json(data);
 });
 
@@ -493,7 +497,9 @@ routeAdmin.delete('/avis/:id', async (c) => {
         return c.json({ error: 'Avis introuvable' }, 404);
     }
 
-    await db.delete(avisClients)
+    // Soft delete
+    await db.update(avisClients)
+        .set({ deleted_at: Math.floor(Date.now() / 1000) })
         .where(eq(avisClients.id, id))
         .run();
     return c.json({ message: "Avis supprimé" });

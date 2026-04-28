@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { db } from '../bdd';
 import { avisClients } from '../db/schema';
-import { desc, eq, count } from 'drizzle-orm';
+import { desc, eq, count, isNull } from 'drizzle-orm';
 import { adminAuth } from '../middleware/adminAuth';
 import { avisClientSchema, avisModerationSchema, type AvisClientInput, type AvisModerationInput } from '../lib/validation';
 import { validate, getValidated } from '../middleware/validate';
@@ -14,12 +14,13 @@ routeAvis.get('/', async (c) => {
     const offset = getOffset(page, limit);
     
     // Récupérer le total pour la pagination
-    const countResult = await db.select({ value: count() }).from(avisClients);
+    const countResult = await db.select({ value: count() }).from(avisClients).where(isNull(avisClients.deleted_at));
     const total = countResult[0]?.value ?? 0;
     
     // Récupérer les données paginées
     const data = await db.select()
         .from(avisClients)
+        .where(isNull(avisClients.deleted_at))
         .orderBy(desc(avisClients.id))
         .limit(limit)
         .offset(offset)

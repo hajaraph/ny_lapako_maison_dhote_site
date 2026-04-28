@@ -28,7 +28,8 @@ export function createTestDb() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nom TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
-            mot_de_passe TEXT NOT NULL
+            mot_de_passe TEXT NOT NULL,
+            deleted_at INTEGER
         );
         
         CREATE TABLE IF NOT EXISTS actualites (
@@ -37,7 +38,8 @@ export function createTestDb() {
             contenu TEXT,
             image_url TEXT,
             date_publication TEXT,
-            statut TEXT DEFAULT 'brouillon'
+            statut TEXT DEFAULT 'brouillon',
+            deleted_at INTEGER
         );
         
         CREATE TABLE IF NOT EXISTS evenements (
@@ -46,7 +48,8 @@ export function createTestDb() {
             description TEXT,
             date_evenement TEXT,
             image_url TEXT,
-            statut TEXT DEFAULT 'planifie'
+            statut TEXT DEFAULT 'planifie',
+            deleted_at INTEGER
         );
         
         CREATE TABLE IF NOT EXISTS avis_clients (
@@ -55,7 +58,8 @@ export function createTestDb() {
             commentaire TEXT,
             note INTEGER DEFAULT 5,
             date_sejour TEXT,
-            statut TEXT DEFAULT 'en_attente'
+            statut TEXT DEFAULT 'en_attente',
+            deleted_at INTEGER
         );
         
         CREATE TABLE IF NOT EXISTS site_settings (
