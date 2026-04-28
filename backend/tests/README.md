@@ -2,9 +2,18 @@
 
 Ce dossier contient les tests unitaires pour le backend utilisant `bun:test`.
 
+## Architecture
+
+Les tests utilisent un **fichier SQLite temporaire** isolé pour chaque suite de tests :
+
+1. `setup.ts` crée un fichier `.sqlite` temporaire unique
+2. `DB_PATH` est défini via `process.env` avant d'importer les routes
+3. Les routes importées utilisent automatiquement ce fichier via `bdd.ts`
+4. Le fichier est nettoyé après chaque suite de tests
+
 ## Structure
 
-- `setup.ts` : Configuration et création de la base de données de test (in-memory)
+- `setup.ts` : Configuration et création de la DB de test (fichier temporaire)
 - `auth.test.ts` : Tests pour l'authentification
 - `avis.test.ts` : Tests pour les avis clients
 
@@ -12,43 +21,29 @@ Ce dossier contient les tests unitaires pour le backend utilisant `bun:test`.
 
 ```bash
 cd backend
-bun test
+bun test              # Tous les tests
+bun test auth.test.ts # Tests auth uniquement
+bun test avis.test.ts # Tests avis uniquement
 ```
 
-## État Actuel
+## Tests Couverts
 
-**Note importante** : Les routes actuelles importent directement la DB depuis `../bdd`. 
-Pour que les tests fonctionnent correctement avec une base de données isolée, 
-il faut refactoriser les routes pour accepter une injection de DB.
+### Auth (`auth.test.ts`)
+- ✅ Login avec identifiants valides
+- ✅ Login avec email invalide → 401
+- ✅ Login avec mot de passe invalide → 401
+- ✅ Corps JSON invalide → 400
 
-Solution recommandée : Créer une factory de routes qui accepte une instance DB :
+### Avis (`avis.test.ts`)
+- ✅ Récupération liste des avis
+- ✅ Création d'un avis valide
+- ✅ Validation : nom_client requis
+- ✅ Validation : date_sejour requise
+- ✅ Validation : commentaire max 500 caractères
 
-```typescript
-// Au lieu de :
-import { db } from '../bdd';
-export const route = new Hono();
+## Débogage
 
-// Faire :
-export function createRoute(db: DB) {
-  const route = new Hono();
-  // utiliser db injectée
-  return route;
-}
-```
-
-## Tests Actuels
-
-Les tests couvrent :
-
-### Auth
-- Login avec identifiants valides
-- Login avec email invalide
-- Login avec mot de passe invalide
-- Requête avec corps JSON invalide
-
-### Avis
-- Récupération de la liste des avis
-- Création d'un avis valide
-- Validation : nom_client requis
-- Validation : date_sejour requise
-- Validation : commentaire max 500 caractères
+Si les tests échouent avec "Identifiants invalides" ou des données inattendues, vérifier que :
+1. `DB_PATH` est bien défini avant l'import dynamique des routes
+2. Les données de test sont insérées après l'import des routes
+3. Le fichier temporaire est bien créé et accessible

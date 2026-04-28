@@ -1,25 +1,33 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Hono } from "hono";
-import routeAvis from "../src/routes/avis";
-import { createTestDb, closeTestDb } from "./setup";
+import { createTestDb, closeTestDb, TEST_DB_PATH } from "./setup";
 import type { Database } from "bun:sqlite";
-import { avisClients } from "../src/db/schema";
 
 describe("Avis Routes", () => {
     let db: any;
     let sqlite: Database;
     let app: Hono;
+    let routeAvis: any;
     
-    beforeAll(() => {
+    beforeAll(async () => {
+        // 1. Créer la DB de test et définir DB_PATH AVANT d'importer les routes
         const testDb = createTestDb();
         db = testDb.db;
         sqlite = testDb.sqlite;
         
-        // Monter les routes sur l'app de test
+        // Définir la variable d'environnement pour que bdd.ts utilise la bonne DB
+        process.env.DB_PATH = TEST_DB_PATH;
+        
+        // 2. Importer dynamiquement les routes (pour qu'elles utilisent la bonne DB)
+        const avisModule = await import("../src/routes/avis");
+        routeAvis = avisModule.default;
+        
+        // 3. Monter les routes sur l'app de test
         app = new Hono();
         app.route('/avis', routeAvis);
         
-        // Insérer des avis de test
+        // 4. Insérer des avis de test
+        const { avisClients } = await import("../src/db/schema");
         db.insert(avisClients).values([
             {
                 nom_client: "Jean Dupont",
@@ -40,6 +48,7 @@ describe("Avis Routes", () => {
     
     afterAll(() => {
         closeTestDb(sqlite);
+        delete process.env.DB_PATH;
     });
     
     describe("GET /avis", () => {

@@ -1,15 +1,24 @@
 /**
  * Configuration globale pour les tests
- * Crée une base de données de test isolée
+ * Crée une base de données de test isolée (fichier temporaire)
  */
 
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "../src/db/schema";
+import { unlinkSync } from "node:fs";
 
-const TEST_DB_PATH = ":memory:"; // Base de données en mémoire pour les tests
+// Fichier temporaire unique pour chaque suite de tests
+export const TEST_DB_PATH = `test-${Date.now()}-${Math.random().toString(36).substring(7)}.sqlite`;
 
 export function createTestDb() {
+    // Supprimer fichier existant s'il existe
+    try {
+        unlinkSync(TEST_DB_PATH);
+    } catch {
+        // Fichier n'existe pas, c'est OK
+    }
+    
     const sqlite = new Database(TEST_DB_PATH);
     const db = drizzle(sqlite, { schema });
     
@@ -67,4 +76,11 @@ export function createTestDb() {
 
 export function closeTestDb(sqlite: Database) {
     sqlite.close();
+    
+    // Supprimer le fichier temporaire
+    try {
+        unlinkSync(TEST_DB_PATH);
+    } catch {
+        // Fichier peut déjà être supprimé ou n'existe pas
+    }
 }

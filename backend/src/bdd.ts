@@ -4,7 +4,9 @@ import { hash } from "argon2";
 import { DEFAULT_SITE_SETTINGS } from "./lib/siteSettings";
 import * as schema from "./db/schema";
 
-const sqlite = new Database("maison.sqlite", { create: true });
+// Support DB_PATH pour tests (fichier temporaire), sinon maison.sqlite par défaut
+const DB_PATH = process.env.DB_PATH || "maison.sqlite";
+const sqlite = new Database(DB_PATH, { create: true });
 export const db = drizzle(sqlite, { schema });
 
 /**
